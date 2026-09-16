@@ -1,10 +1,10 @@
 # Inlämningsuppgift: Java Web Services
 
-**Kurs:** Java Web Services, 45 YH-poäng
-**Form:** Individuell
-**Betyg:** Icke godkänt (IG) / Godkänt (G) / Väl godkänt (VG)
-**Deadline:** måndag 2026-10-12 kl. 08:00
-**Muntlig redovisning:** tisdag 2026-10-13 och torsdag 2026-10-15
+- **Kurs:** Java Web Services, 45 YH-poäng
+- **Form:** Individuell
+- **Betyg:** Icke godkänt (IG) / Godkänt (G) / Väl godkänt (VG)
+- **Deadline:** Onsdag 2026-10-14 kl. 08:00
+- **Muntlig redovisning:** onsdag 2026-10-14 kl. 09:00
 
 ## Så här fungerar upplägget
 
@@ -14,9 +14,9 @@ Det finns bara en fast deadline. Fram till dess har vi tre kontrollpunkter under
 
 | Kontrollpunkt | Datum | Du visar |
 | --- | --- | --- |
-| Del 1 | torsdag 2026-09-24 | API:et svarar |
-| Del 2 | torsdag 2026-10-01 | Testerna är gröna |
-| Del 3 | torsdag 2026-10-08 | Tjänsten är åtkomlig utifrån |
+| Del 1 | onsdag 2026-09-23 | API:et svarar |
+| Del 2 | onsdag 2026-09-30 | Testerna är gröna |
+| Del 3 | onsdag 2026-10-07 | Tjänsten är åtkomlig utifrån |
 
 Delarna 1, 2 och 3 tar ungefär en till två arbetsdagar vardera. Del 4 tar två timmar, inte två dagar. Ta hänsyn till det när du planerar. Annars riskerar du att skjuta upp del 4 till natten före deadline och gå miste om VG på den delen.
 
@@ -100,7 +100,7 @@ Cirka 10-15 minuter per person.
 
 ## Inlämning
 
-Lämna in tre saker senast måndag 2026-10-12 kl. 08:00:
+Lämna in tre saker senast onsdag 2026-10-14 kl. 08:00:
 
 1. En länk till ditt GitHub-repo.
 2. URL:en till den driftsatta tjänsten.
@@ -132,7 +132,7 @@ VG bedöms alltså endast utifrån del 2 och del 4 samt redovisningen. Delarna 1
 
 ## Komplettering
 
-Du har ett kompletteringstillfälle. Deadline för kompletteringen är fredag 2026-11-06 kl. 23:59.
+Du har ett kompletteringstillfälle. Deadline för kompletteringen är fredag 2026-11-06 kl. 15:00.
 
 ## Kom igång
 
