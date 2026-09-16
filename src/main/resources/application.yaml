@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: restaurant-api
+
+# Most hosting platforms hand you the port in an environment variable.
+# Falls back to 8080 when you run it locally.
+server:
+  port: ${PORT:8080}
