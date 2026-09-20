@@ -32,27 +32,38 @@ Accept: application/json
 ### Ta bort kommentarstecknen när du byggt respektive endpoint.
 ### ---------------------------------------------------------------------
 
+### Skapa restaurang
+POST {{host}}/restaurants
+Content-Type: application/json
+
+{
+  "name": "Abbas Food",
+  "city": "Uppsala",
+  "cuisine": "Afghan-Persian",
+  "seatCount": 50
+}
+
 ### 2. Lista restauranger. Paginerat.
-# GET {{host}}/restaurants?page=0&size=10
-# Accept: application/json
+GET {{host}}/restaurants?page=0&size=10
+Accept: application/json
 
 ### 3. Skapa en bokning. Ska ge 201 och en Location-header.
 ### Titta på svarets headers, inte bara på body.
-# POST {{host}}/bookings
-# Content-Type: application/json
-#
-# {
-#   "restaurantId": 1,
-#   "guestName": "Alice Andersson",
-#   "guestEmail": "alice@example.com",
-#   "dateTime": "2026-10-20T19:00:00",
-#   "partySize": 4
-# }
+POST {{host}}/bookings
+Content-Type: application/json
+
+{
+  "restaurantId": 1,
+  "guestName": "Alice Andersson",
+  "guestEmail": "alice@example.com",
+  "dateTime": "2026-10-20T19:00:00",
+  "partySize": 4
+ }
 
 ### 4. Hämta bokningen. Leta efter länkarna i svaret: en bokning i
 ### REQUESTED ska erbjuda både bekräfta och avboka.
-# GET {{host}}/bookings/1
-# Accept: application/json
+GET {{host}}/bookings/1
+Accept: application/json
 
 ### 5. En bokning som inte finns. Ska ge 404 som application/problem+json.
 ### Får du tom body har du glömt spring.mvc.problemdetails.enabled.

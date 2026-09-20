@@ -968,3 +968,5 @@ EdugradeBrandManualv2.0.pdf
 # lives in this repo as workspaces; committing it doubled 99k lines.
 # Rebuilt from scratch on every export, so it is never the source of truth.
 **/clean/
+
+.codex
