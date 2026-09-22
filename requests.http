@@ -39,7 +39,7 @@ Content-Type: application/json
 {
   "name": "Abbas Food",
   "city": "Uppsala",
-  "cuisine": "Afghan-Persian",
+  "cuisine": "Fast food",
   "seatCount": 50
 }
 
@@ -67,19 +67,19 @@ Accept: application/json
 
 ### 5. En bokning som inte finns. Ska ge 404 som application/problem+json.
 ### Får du tom body har du glömt spring.mvc.problemdetails.enabled.
-# GET {{host}}/bookings/999999
-# Accept: application/json
+GET {{host}}/bookings/999999
+Accept: application/problem+json
 
 ### 6. Villkorad hämtning. Kopiera ETag-värdet från svaret på anrop 4
 ### och klistra in det nedan. Ska ge 304 och tom body.
-# GET {{host}}/bookings/1
-# If-None-Match: "klistra-in-etag-har"
+GET {{host}}/bookings/1
+If-None-Match: "booking-1-REQUESTED"
 
 ### 7. En otillåten tillståndsövergång. Avboka först, försök sedan
 ### bekräfta samma bokning. Ska ge 409.
-# POST {{host}}/bookings/1/cancel
+POST {{host}}/bookings/1/cancel
 ###
-# POST {{host}}/bookings/1/confirm
+POST {{host}}/bookings/1/confirm
 
 
 ### ---------------------------------------------------------------------
