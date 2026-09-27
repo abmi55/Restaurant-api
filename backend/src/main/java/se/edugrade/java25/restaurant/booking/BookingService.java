@@ -1,5 +1,7 @@
 package se.edugrade.java25.restaurant.booking;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.edugrade.java25.restaurant.restaurant.Restaurant;
@@ -11,12 +13,18 @@ import java.util.List;
 @Service
 public class BookingService {
 
+    private static final Logger logger = LoggerFactory.getLogger(BookingService.class);
+
     private final BookingRepository bookingRepository;
     private final RestaurantRepository restaurantRepository;
+    private final NotificationService notificationService;
 
-    public BookingService(BookingRepository bookingRepository, RestaurantRepository restaurantRepository) {
+    public BookingService(BookingRepository bookingRepository,
+                          RestaurantRepository restaurantRepository,
+                          NotificationService notificationService) {
         this.bookingRepository = bookingRepository;
         this.restaurantRepository = restaurantRepository;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -31,7 +39,10 @@ public class BookingService {
                 request.partySize()
         );
 
-        return BookingResponse.from(bookingRepository.save(booking));
+        Booking savedBooking = bookingRepository.save(booking);
+        logger.info("Booking {} created for restaurant {} with status {}",
+                savedBooking.getId(), restaurant.getId(), savedBooking.getStatus());
+        return BookingResponse.from(savedBooking);
     }
 
     @Transactional(readOnly = true)
@@ -48,7 +59,9 @@ public class BookingService {
 
     @Transactional
     public BookingResponse confirm(Long id) {
-        return transition(id, BookingStatus.CONFIRMED);
+        BookingResponse response = transition(id, BookingStatus.CONFIRMED);
+        notificationService.bookingConfirmed(response.id(), response.guestEmail());
+        return response;
     }
 
     @Transactional
@@ -63,10 +76,12 @@ public class BookingService {
 
     private BookingResponse transition(Long id, BookingStatus targetStatus) {
         Booking booking = findBooking(id);
+        BookingStatus previousStatus = booking.getStatus();
         if (!booking.transitionTo(targetStatus)) {
             throw new InvalidBookingStateException(id, targetStatus);
         }
 
+        logger.info("Booking {} status changed from {} to {}", id, previousStatus, booking.getStatus());
         return BookingResponse.from(booking);
     }
 

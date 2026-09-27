@@ -1,5 +1,7 @@
 package se.edugrade.java25.restaurant.restaurant;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -7,6 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class RestaurantService {
+
+    private static final Logger logger = LoggerFactory.getLogger(RestaurantService.class);
 
     private final RestaurantRepository restaurantRepository;
 
@@ -23,7 +27,9 @@ public class RestaurantService {
                 request.seatCount()
         );
 
-        return RestaurantResponse.from(restaurantRepository.save(restaurant));
+        Restaurant savedRestaurant = restaurantRepository.save(restaurant);
+        logger.info("Restaurant {} created", savedRestaurant.getId());
+        return RestaurantResponse.from(savedRestaurant);
     }
 
     @Transactional(readOnly = true)
