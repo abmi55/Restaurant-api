@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Reactor aggregator for the contract test between the API and the mocked
+  notification service.
+
+  notification-service is listed before backend so that the provider verifies
+  its contract before backend's contract test generates a stub from the same
+  contract file. `mvn test` from this directory runs both.
+
+  backend keeps spring-boot-starter-parent as its parent and still builds on
+  its own, which the Docker image relies on.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>se.edugrade.java25</groupId>
+    <artifactId>restaurant-assignment</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>notification-service</module>
+        <module>backend</module>
+    </modules>
+</project>

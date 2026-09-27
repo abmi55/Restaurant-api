@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  PROVIDER module: the mocked notification service the restaurant API calls
+  when a booking is confirmed.
+
+  The spring-cloud-contract-maven-plugin reads the contract under
+  src/test/resources/contracts/notification/ and on every build
+  (a) generates ContractVerifierTest, which proves the controller honors the
+  contract, and (b) packages a WireMock stub into
+  notification-service-1.0-SNAPSHOT-stubs.jar. backend's contract test does not
+  use that jar: it generates its stub at test time from the same contract file,
+  so `mvn test` needs no prior `mvn install`.
+
+  Do not add <extensions>true</extensions> to the plugin: with Spring Cloud
+  Contract 5.0.3 and this Boot/Cloud combination it fails at test-compile time
+  with "ClassCastException: BasicAuthCache cannot be cast to AuthCache".
+  The explicit <executions> below avoid the extensions mechanism.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>4.1.0</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>se.edugrade.java25</groupId>
+    <artifactId>notification-service</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <java.version>25</java.version>
+        <spring-cloud.version>2025.1.2</spring-cloud.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-contract-verifier</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-contract-maven-plugin</artifactId>
+                <version>5.0.3</version>
+                <configuration>
+                    <testFramework>JUNIT5</testFramework>
+                    <baseClassForTests>
+                        se.edugrade.java25.notification.ContractVerifierBase
+                    </baseClassForTests>
+                    <contractsDirectory>${project.basedir}/src/test/resources/contracts/notification</contractsDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>convert</goal>
+                            <goal>generateTests</goal>
+                            <goal>generateStubs</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -25,8 +25,11 @@ jobs:
           distribution: temurin
           java-version: '25'
           cache: maven
-          cache-dependency-path: backend/pom.xml
+          cache-dependency-path: |
+            pom.xml
+            backend/pom.xml
+            notification-service/pom.xml
 
+      # From the root, so the provider verifies its contract before the API's contract test runs.
       - name: Run tests
-        working-directory: backend
         run: mvn -B -ntp test
