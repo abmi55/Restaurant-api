@@ -7,9 +7,9 @@
   src/test/resources/contracts/notification/ and on every build
   (a) generates ContractVerifierTest, which proves the controller honors the
   contract, and (b) packages a WireMock stub into
-  notification-service-1.0-SNAPSHOT-stubs.jar. backend's contract test does not
-  use that jar: it generates its stub at test time from the same contract file,
-  so `mvn test` needs no prior `mvn install`.
+  notification-service-1.0-SNAPSHOT-stubs.jar, installed to the local
+  repository by `mvn install`. That jar is what backend's contract test
+  consumes.
 
   Do not add <extensions>true</extensions> to the plugin: with Spring Cloud
   Contract 5.0.3 and this Boot/Cloud combination it fails at test-compile time

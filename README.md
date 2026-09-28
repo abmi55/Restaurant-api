@@ -41,11 +41,15 @@ curl localhost:8080/health
 
 Du ska få tillbaka `{"status":"UP","service":"restaurant-api"}`. Om du får det fungerar din miljö, och du kan börja med del 1.
 
-Kör testerna med:
+Kör testerna från repots rot med:
 
 ```bash
-mvn test
+./mvnw clean install
 ```
+
+På Windows (cmd eller PowerShell) används `mvnw.cmd clean install`. Maven Wrapper låser Maven 3.9.11, samma version som CI. Med Maven 3.9.16 misslyckas bygget med `BasicAuthCache cannot be cast to AuthCache`.
+
+`install` krävs första gången. Kontrakttestet i `backend` hämtar aviseringstjänstens stub-JAR från den lokala Maven-repon (`~/.m2`), och dit kommer den först i fasen `install`. Därefter fungerar även `./mvnw test`, men det använder den stub-JAR som senast installerades.
 
 ## requests.http
 

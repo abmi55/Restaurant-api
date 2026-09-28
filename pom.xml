@@ -4,8 +4,10 @@
   notification service.
 
   notification-service is listed before backend so that the provider verifies
-  its contract before backend's contract test generates a stub from the same
-  contract file. `mvn test` from this directory runs both.
+  its contract and installs its stubs jar into the local repository before
+  backend's contract test resolves that jar. Run `mvn clean install` from this
+  directory, not `mvn test` and not from a submodule: the stubs jar only
+  reaches ~/.m2 in the install phase.
 
   backend keeps spring-boot-starter-parent as its parent and still builds on
   its own, which the Docker image relies on.

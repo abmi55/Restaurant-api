@@ -2,12 +2,12 @@ package se.edugrade.java25.restaurant.booking;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
-import org.springframework.cloud.contract.stubrunner.junit.StubRunnerExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cloud.contract.stubrunner.StubFinder;
+import org.springframework.cloud.contract.stubrunner.spring.AutoConfigureStubRunner;
 import org.springframework.cloud.contract.stubrunner.spring.StubRunnerProperties;
 import org.springframework.web.client.HttpClientErrorException;
-
-import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -16,29 +16,25 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * Runs {@link HttpNotificationService} over real HTTP against a WireMock stub
  * generated from notification-service's contract.
  *
- * <p>Stub Runner generates the stub at test time from the same contract file
- * that notification-service's {@code ContractVerifierTest} verifies. Reading the
- * contract directly, instead of a stub jar installed in {@code ~/.m2}, keeps
- * {@code mvn test} green on a fresh clone without a prior {@code mvn install}.
- *
- * <p>No Spring context is started: the test only needs the adapter and the
- * stub, not the database or the security configuration.
+ * <p>{@code @AutoConfigureStubRunner} resolves notification-service's stub jar
+ * by Maven coordinates and starts it on a free port ({@code 0}).
+ * {@link StubFinder} looks that port up. {@code StubsMode.LOCAL} reads the jar
+ * from {@code ~/.m2}, where it only arrives in the install phase, so run
+ * {@code mvn clean install} from the repository root before this test.
  */
+@SpringBootTest
+@AutoConfigureStubRunner(
+        ids = "se.edugrade.java25:notification-service:+:stubs:0",
+        stubsMode = StubRunnerProperties.StubsMode.LOCAL)
 class NotificationContractTest {
 
     private static final String GUEST_EMAIL = "guest@example.test";
-    // Relative to backend/, where Surefire runs whether Maven starts from the root or from backend/.
-    private static final String CONTRACTS_DIRECTORY = "../notification-service/src/test/resources/contracts";
 
-    @RegisterExtension
-    static StubRunnerExtension stubRunner = new StubRunnerExtension()
-            .downloadStub("se.edugrade.java25", "notification-service", "+", "stubs")
-            .repoRoot("stubs://" + Path.of(CONTRACTS_DIRECTORY).toAbsolutePath().normalize().toUri())
-            .stubsMode(StubRunnerProperties.StubsMode.REMOTE)
-            .withGenerateStubs(true);
+    @Autowired
+    private StubFinder stubFinder;
 
     private HttpNotificationService notificationService() {
-        return new HttpNotificationService(stubRunner.findStubUrl("notification-service").toString());
+        return new HttpNotificationService(stubFinder.findStubUrl("notification-service").toString());
     }
 
     @Test
