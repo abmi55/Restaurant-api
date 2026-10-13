@@ -1,0 +1,13 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+server:
+  # The host's reverse proxy terminates TLS and sends X-Forwarded-Proto: https. Without this,
+  # springdoc builds an http:// server URL and Swagger UI's "Try it out" is blocked as mixed content.
+  forward-headers-strategy: framework

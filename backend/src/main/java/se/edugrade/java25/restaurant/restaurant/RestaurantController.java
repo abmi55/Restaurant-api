@@ -1,6 +1,7 @@
 package se.edugrade.java25.restaurant.restaurant;
 
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +26,7 @@ public class RestaurantController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<RestaurantResponse>> getAll(Pageable pageable) {
+    public ResponseEntity<Page<RestaurantResponse>> getAll(@ParameterObject Pageable pageable) {
         return ResponseEntity.ok(restaurantService.getAll(pageable));
     }
 

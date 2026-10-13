@@ -3,15 +3,19 @@ package se.edugrade.java25.restaurant.booking;
 import io.restassured.http.ContentType;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import se.edugrade.java25.restaurant.restaurant.Restaurant;
 import se.edugrade.java25.restaurant.restaurant.RestaurantRepository;
+import se.edugrade.java25.restaurant.security.TestJwtDecoderConfig;
+import se.edugrade.java25.restaurant.security.TestTokenIssuer;
 
 import java.time.LocalDateTime;
 
@@ -27,7 +31,16 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
+/**
+ * API integration test: exercises real HTTP endpoints and persistence with the
+ * notification service mocked.
+ *
+ * <p>Requests carry tokens signed by {@link TestTokenIssuer} and validated by
+ * the real filter chain and {@code JwtDecoder}: a guest creates and reads,
+ * staff confirms and cancels.
+ */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Import(TestJwtDecoderConfig.class)
 class BookingApiTest {
 
     private static final String GUEST_NAME = "Test Guest";
@@ -47,7 +60,12 @@ class BookingApiTest {
     @Autowired
     private RestaurantRepository restaurantRepository;
 
+    @Autowired
+    private TestTokenIssuer tokenIssuer;
+
     private Long restaurantId;
+    private String guestToken;
+    private String staffToken;
 
     // Real HTTP means the server commits its own transactions, so test data is cleaned explicitly.
     @BeforeEach
@@ -55,13 +73,14 @@ class BookingApiTest {
         bookingRepository.deleteAll();
         restaurantRepository.deleteAll();
         restaurantId = restaurantRepository.save(new Restaurant("Test Restaurant", "Stockholm", "Swedish", 20)).getId();
+        guestToken = tokenIssuer.token("bookings:write", "GUEST");
+        staffToken = tokenIssuer.token("bookings:manage", "STAFF");
     }
 
     @Test
     @DisplayName("POST /bookings returns 201 with Location and REQUESTED booking")
     void createBookingReturns201AndLocation() {
-        Response response = given()
-                .port(port)
+        Response response = as(guestToken)
                 .contentType(ContentType.JSON)
                 .body(bookingJson())
         .when()
@@ -82,8 +101,7 @@ class BookingApiTest {
     void getBookingReturns200() {
         long bookingId = createBooking();
 
-        JsonPath booking = given()
-                .port(port)
+        JsonPath booking = as(guestToken)
         .when()
                 .get("/bookings/{id}", bookingId)
         .then()
@@ -100,8 +118,7 @@ class BookingApiTest {
         long unknownId = Long.MAX_VALUE;
         assertFalse(bookingRepository.existsById(unknownId));
 
-        given()
-                .port(port)
+        as(guestToken)
         .when()
                 .get("/bookings/{id}", unknownId)
         .then()
@@ -116,16 +133,14 @@ class BookingApiTest {
     void confirmBookingNotifiesGuest() {
         long bookingId = createBooking();
 
-        given()
-                .port(port)
+        as(staffToken)
         .when()
                 .post("/bookings/{id}/confirm", bookingId)
         .then()
                 .statusCode(200)
                 .body("status", equalTo("CONFIRMED"));
 
-        given()
-                .port(port)
+        as(staffToken)
         .when()
                 .get("/bookings/{id}", bookingId)
         .then()
@@ -141,16 +156,14 @@ class BookingApiTest {
     void confirmCancelledBookingReturns409WithoutNotification() {
         long bookingId = createBooking();
 
-        given()
-                .port(port)
+        as(staffToken)
         .when()
                 .post("/bookings/{id}/cancel", bookingId)
         .then()
                 .statusCode(200)
                 .body("status", equalTo("CANCELLED"));
 
-        given()
-                .port(port)
+        as(staffToken)
         .when()
                 .post("/bookings/{id}/confirm", bookingId)
         .then()
@@ -158,8 +171,7 @@ class BookingApiTest {
                 .contentType(startsWith("application/problem+json"))
                 .body("status", equalTo(409));
 
-        given()
-                .port(port)
+        as(staffToken)
         .when()
                 .get("/bookings/{id}", bookingId)
         .then()
@@ -167,6 +179,12 @@ class BookingApiTest {
                 .body("status", equalTo("CANCELLED"));
 
         verifyNoInteractions(notificationService);
+    }
+
+    private RequestSpecification as(String token) {
+        return given()
+                .port(port)
+                .header("Authorization", "Bearer " + token);
     }
 
     private String bookingJson() {
@@ -182,8 +200,7 @@ class BookingApiTest {
     }
 
     private long createBooking() {
-        return given()
-                .port(port)
+        return as(guestToken)
                 .contentType(ContentType.JSON)
                 .body(bookingJson())
         .when()

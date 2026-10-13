@@ -1,13 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Reactor aggregator for the contract test between the API and the mocked
-  notification service.
-
-  notification-service is listed before backend so that the provider verifies
-  its contract and installs its stubs jar into the local repository before
-  backend's contract test resolves that jar. Run `mvn clean install` from this
-  directory, not `mvn test` and not from a submodule: the stubs jar only
-  reaches ~/.m2 in the install phase.
+  Reactor aggregator, so that the Maven wrapper in this directory builds and
+  tests backend with `./mvnw test`.
 
   backend keeps spring-boot-starter-parent as its parent and still builds on
   its own, which the Docker image relies on.
@@ -23,7 +17,6 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>notification-service</module>
         <module>backend</module>
     </modules>
 </project>

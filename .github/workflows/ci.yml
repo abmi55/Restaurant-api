@@ -28,13 +28,6 @@ jobs:
           cache-dependency-path: |
             pom.xml
             backend/pom.xml
-            notification-service/pom.xml
 
-      # From the root, so notification-service verifies its contract and installs its stubs jar
-      # into the runner's ~/.m2 before the API's contract test resolves it (StubsMode.LOCAL).
-      # `install`, not `test`: the stubs jar only reaches ~/.m2 in the install phase.
-      # Nothing is published outside the runner.
-      # The wrapper pins Maven 3.9.11: on 3.9.16 spring-cloud-contract-maven-plugin 5.0.3
-      # fails when surefire starts, with "BasicAuthCache cannot be cast to AuthCache".
       - name: Build and test
-        run: ./mvnw -B -ntp clean install
+        run: ./mvnw -B -ntp clean test

@@ -1,7 +1,8 @@
 ### Inlämningsuppgift: anrop mot ditt API
 ###
 ### Starta appen först:  mvn spring-boot:run
-### IntelliJ: klicka på den gröna pilen till vänster om varje anrop.
+### IntelliJ: välj miljön "local" uppe till höger och klicka på den gröna
+### pilen till vänster om varje anrop.
 ### VS Code: installera tillägget REST Client.
 ###
 ### Fyll på filen allt eftersom du bygger. Den är din snabbaste väg att se
@@ -11,11 +12,16 @@
 
 ### Byt till din driftsatta tjänst inför redovisningen genom att
 ### kommentera bort raden ovan och ta fram den här i stället.
-# @host = https://ditt-projekt.onrender.com
+# @host = https://<din-driftsatta-url>
+### host kommer från http-client.env.json. Tokens kommer från den ignorerade
+### http-client.private.env.json (guestToken, staffToken, adminToken).
+### Hämta en access token genom att logga in som guest1, staff1 eller admin1
+### via Authorize i Swagger UI (http://localhost:8080/swagger-ui.html) och
+### klistra in den i private-filen. Använd aldrig ID-token som bearer-token.
 
 
 ### 1. Lever tjänsten? Svarar 200 och {"status":"UP","service":"restaurant-api"}.
-### Det här är det enda anropet som fungerar i det utdelade projektet.
+### Öppen endpoint, ingen token behövs.
 GET {{host}}/health
 Accept: application/json
 
@@ -29,12 +35,12 @@ Accept: application/json
 
 ### ---------------------------------------------------------------------
 ### Del 1: REST-API
-### Ta bort kommentarstecknen när du byggt respektive endpoint.
 ### ---------------------------------------------------------------------
 
-### Skapa restaurang
+### Skapa restaurang. Kräver admin (ADMIN + restaurants:write).
 POST {{host}}/restaurants
 Content-Type: application/json
+Authorization: Bearer {{adminToken}}
 
 {
   "name": "Abbas Food",
@@ -43,17 +49,18 @@ Content-Type: application/json
   "seatCount": 50
 }
 
-### 2. Lista restauranger. Paginerat.
+### 2. Lista restauranger. Paginerat. Öppen endpoint.
 GET {{host}}/restaurants?page=0&size=10
 Accept: application/json
 
-### 3. Skapa en bokning. Ska ge 201 och en Location-header.
-### Titta på svarets headers, inte bara på body.
+### 3. Skapa en bokning. Kräver gäst (GUEST + bookings:write).
+### Ska ge 201 och en Location-header. Titta på svarets headers, inte bara på body.
 POST {{host}}/bookings
 Content-Type: application/json
+Authorization: Bearer {{guestToken}}
 
 {
-  "restaurantId": 1,
+  "restaurantId": 3,
   "guestName": "Alice Andersson",
   "guestEmail": "alice@example.com",
   "dateTime": "2026-10-20T19:00:00",
@@ -64,22 +71,27 @@ Content-Type: application/json
 ### REQUESTED ska erbjuda både bekräfta och avboka.
 GET {{host}}/bookings/1
 Accept: application/json
+Authorization: Bearer {{guestToken}}
 
 ### 5. En bokning som inte finns. Ska ge 404 som application/problem+json.
 ### Får du tom body har du glömt spring.mvc.problemdetails.enabled.
 GET {{host}}/bookings/999999
 Accept: application/problem+json
+Authorization: Bearer {{guestToken}}
 
 ### 6. Villkorad hämtning. Kopiera ETag-värdet från svaret på anrop 4
 ### och klistra in det nedan. Ska ge 304 och tom body.
 GET {{host}}/bookings/1
 If-None-Match: "booking-1-REQUESTED"
+Authorization: Bearer {{guestToken}}
 
-### 7. En otillåten tillståndsövergång. Avboka först, försök sedan
-### bekräfta samma bokning. Ska ge 409.
+### 7. En otillåten tillståndsövergång. Kräver personal (STAFF + bookings:manage).
+### Avboka först, försök sedan bekräfta samma bokning. Ska ge 409.
 POST {{host}}/bookings/1/cancel
+Authorization: Bearer {{staffToken}}
 ###
 POST {{host}}/bookings/1/confirm
+Authorization: Bearer {{staffToken}}
 
 
 ### ---------------------------------------------------------------------
@@ -87,23 +99,22 @@ POST {{host}}/bookings/1/confirm
 ### ---------------------------------------------------------------------
 
 ### 8. Utan token. Ska ge 401, inte 403.
-# GET {{host}}/bookings
-# Accept: application/json
+GET {{host}}/bookings
+Accept: application/json
 
-### 9. Med token. Hämta en riktig token från din authorization server och
-### klistra in den. Ska ge 200.
-# GET {{host}}/bookings
-# Accept: application/json
-# Authorization: Bearer klistra-in-token-har
+### 9. Med token. Ska ge 200.
+GET {{host}}/bookings
+Accept: application/json
+Authorization: Bearer {{guestToken}}
 
 ### 10. Rätt inloggad, fel behörighet. En gäst som försöker bekräfta
 ### en bokning ska få 403, inte 401.
-# POST {{host}}/bookings/1/confirm
-# Authorization: Bearer klistra-in-gast-token-har
+POST {{host}}/bookings/1/confirm
+Authorization: Bearer {{guestToken}}
 
 ### 11. CORS-preflight från din frontend. Svaret ska innehålla
 ### Access-Control-Allow-Origin. Gör det inte det är CORS fel konfigurerat.
-# OPTIONS {{host}}/bookings
-# Origin: http://localhost:5173
-# Access-Control-Request-Method: POST
-# Access-Control-Request-Headers: content-type,authorization
+OPTIONS {{host}}/bookings
+Origin: http://localhost:5173
+Access-Control-Request-Method: POST
+Access-Control-Request-Headers: content-type,authorization

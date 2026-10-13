@@ -3,6 +3,7 @@ package se.edugrade.java25.restaurant.exception;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -30,6 +31,12 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(InvalidBookingStateException.class)
     ProblemDetail handleInvalidBookingState(InvalidBookingStateException exception) {
         return problemDetail(HttpStatus.CONFLICT, exception.getMessage());
+    }
+
+    // Thrown when ?sort= names a field the entity does not have, e.g. sort=string from Swagger UI.
+    @ExceptionHandler(PropertyReferenceException.class)
+    ProblemDetail handleInvalidSortProperty(PropertyReferenceException exception) {
+        return problemDetail(HttpStatus.BAD_REQUEST, "Invalid sort property: " + exception.getPropertyName());
     }
 
     @Override

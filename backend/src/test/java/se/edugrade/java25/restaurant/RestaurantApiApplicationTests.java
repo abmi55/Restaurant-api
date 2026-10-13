@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 /**
+ * Integration smoke test: verifies that the Spring application context starts.
+ *
  * Starts the whole application context. It fails if a bean cannot be created,
  * which catches most wiring mistakes before you ever open a browser.
  *

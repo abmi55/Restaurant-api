@@ -4,9 +4,31 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
+    defer-datasource-initialization: true
+  sql:
+    init:
+      mode: embedded
   mvc:
     problemdetails:
       enabled: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${JWT_ISSUER_URI:https://restaurant-api-abbas.eu.auth0.com/}
+          audiences: ${JWT_AUDIENCE:https://restaurant-api}
+app:
+  security:
+    roles-claim: https://restaurant-api/roles
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+springdoc:
+  swagger-ui:
+    oauth:
+      client-id: ${SWAGGER_CLIENT_ID:MjuU7HNoxc7r4EFP3SS1ztoutVOu9q2H}
+      use-pkce-with-authorization-code-grant: true
+      additional-query-string-params:
+        audience: ${JWT_AUDIENCE:https://restaurant-api}
 # Most hosting platforms hand you the port in an environment variable.
 # Falls back to 8080 when you run it locally.
 server:
