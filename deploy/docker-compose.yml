@@ -1,0 +1,101 @@
+# Production stack on the VPS. Values come from deploy/.env (see .env.example).
+name: restaurant
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      RESTAURANT_DB_PASSWORD: ${RESTAURANT_DB_PASSWORD}
+      IMAGES_DB_PASSWORD: ${IMAGES_DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      # TCP, not the socket: during first-time init the server only listens on the socket,
+      # so this stays unhealthy until the init scripts have created the databases.
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    logging: *logging
+
+  restaurant-api:
+    image: ghcr.io/abmi55/restaurant-api:${API_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: restaurant
+      DB_USER: restaurant
+      DB_PASSWORD: ${RESTAURANT_DB_PASSWORD}
+      CORS_ALLOWED_ORIGINS: https://${APP_HOST}
+      JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=75
+    mem_limit: 768m
+    depends_on:
+      postgres:
+        condition: service_healthy
+    logging: *logging
+
+  restaurant-images:
+    image: ghcr.io/abmi55/restaurant-images:${IMAGES_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: images
+      DB_USER: images
+      DB_PASSWORD: ${IMAGES_DB_PASSWORD}
+      CORS_ALLOWED_ORIGINS: https://${APP_HOST}
+      RESTAURANT_API_URL: http://restaurant-api:8080
+      JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=75
+    volumes:
+      - images:/data/images
+    mem_limit: 768m
+    depends_on:
+      postgres:
+        condition: service_healthy
+    logging: *logging
+
+  frontend:
+    image: ghcr.io/abmi55/restaurant-frontend:${FRONTEND_TAG:-latest}
+    restart: unless-stopped
+    mem_limit: 64m
+    logging: *logging
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      APP_HOST: ${APP_HOST}
+      API_HOST: ${API_HOST}
+      IMAGES_HOST: ${IMAGES_HOST}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Holds the TLS certificates. Never delete it, or Let's Encrypt rate limits may block new ones.
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+      - restaurant-api
+      - restaurant-images
+    logging: *logging
+
+volumes:
+  pgdata:
+  images:
+  caddy_data:
+  caddy_config:

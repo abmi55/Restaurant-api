@@ -1,0 +1,11 @@
+{$APP_HOST} {
+	reverse_proxy frontend:80
+}
+
+{$API_HOST} {
+	reverse_proxy restaurant-api:8080
+}
+
+{$IMAGES_HOST} {
+	reverse_proxy restaurant-images:8081
+}

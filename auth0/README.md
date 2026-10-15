@@ -63,9 +63,11 @@ Connection `Username-Password-Authentication`. Lösenorden finns i en lösenords
 
 | Inställning | Värde |
 |---|---|
-| Allowed Callback URLs | `http://localhost:8080/swagger-ui/oauth2-redirect.html` (produktions-URL:er läggs till vid driftsättning) |
-| Allowed Web Origins | `http://localhost:8080` |
-| Allowed Origins (CORS) | `http://localhost:8080` |
+| Allowed Callback URLs | `http://localhost:8080/swagger-ui/oauth2-redirect.html`, `https://app.136-148-214-21.sslip.io`, `https://api.136-148-214-21.sslip.io/swagger-ui/oauth2-redirect.html`, `https://images.136-148-214-21.sslip.io/swagger-ui/oauth2-redirect.html` |
+| Allowed Logout URLs | `https://app.136-148-214-21.sslip.io` |
+| Allowed Web Origins | `http://localhost:8080`, `https://app.136-148-214-21.sslip.io`, `https://api.136-148-214-21.sslip.io`, `https://images.136-148-214-21.sslip.io` |
+| Allowed Origins (CORS) | `http://localhost:8080`, `https://app.136-148-214-21.sslip.io`, `https://api.136-148-214-21.sslip.io`, `https://images.136-148-214-21.sslip.io` |
+| Application Login URI | Tom. Frontenden har ingen sida som startar inloggningen direkt. |
 | Grant Types | Endast Authorization Code |
 | Åtkomst till Restaurant API | User-delegated access med alla tre permissions; ingen client access |
 
