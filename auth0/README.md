@@ -57,6 +57,18 @@ Connection `Username-Password-Authentication`. Lösenorden finns i en lösenords
 
 `Add roles to access token`, trigger Login / Post Login, Node 22. Koden finns i [post-login-roles.js](post-login-roles.js). Den lägger användarens roller i claimet `https://restaurant-api/roles`, som `app.security.roles-claim` pekar på. Actionen är deployad och ligger i flödet under Actions → Triggers → post-login.
 
+En ny användare har ingen roll. Med RBAC får den då inga scopes. Därför ger actionen rollen `GUEST` till varje användare som saknar roll. Den tilldelar rollen i Auth0 via Management API och lägger också `GUEST` och `bookings:write` i den token som skapas vid samma inloggning. Användare som redan finns men saknar roll får `GUEST` vid nästa inloggning. Personal och administratörer får sina roller manuellt som tidigare.
+
+Actionen kräver tre secrets:
+
+| Secret | Värde |
+|---|---|
+| `M2M_CLIENT_ID` | Client ID för `Restaurant Action Role Assigner` |
+| `M2M_CLIENT_SECRET` | Client Secret för samma applikation |
+| `GUEST_ROLE_ID` | ID för rollen `GUEST` (User Management → Roles → GUEST, `rol_...`) |
+
+`Restaurant Action Role Assigner` är en Machine to Machine-applikation. Den är auktoriserad för Auth0 Management API med bara scopet `create:role_members`.
+
 ## Applikation för Swagger UI (Applications → Applications)
 
 `Restaurant API Swagger UI`, typ Single Page Application. Det är en publik klient med PKCE och utan secret (Token Endpoint Authentication Method `None`).
