@@ -5,6 +5,10 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
+# All three repos deploy here. A second run waits until the first is done.
+exec 9>/tmp/restaurant-deploy.lock
+flock 9
+
 set -a
 source .env
 set +a

@@ -70,7 +70,26 @@ bash deploy.sh
 
 Om driftfilerna har ändrats, kopiera dem först med `scp` som ovan. `scp` skriver inte över `.env`, eftersom filen inte finns i repot.
 
-Skriptet hämtar de senaste imagen med `docker compose pull`. Det startar om ändrade containrar och väntar sedan i högst 120 s på att alla tre adresser svarar. Om någon inte svarar avslutas det med felkod.
+Skriptet hämtar de senaste imagen med `docker compose pull`. Det startar om ändrade containrar och väntar sedan i högst 120 s på att alla tre adresser svarar. Om någon inte svarar avslutas det med felkod. Skriptet tar ett lås med `flock`, så två samtidiga körningar väntar på varandra.
+
+## Automatisk deploy
+
+Alla tre repona har ett jobb `deploy` i `.github/workflows/ci.yml`. Det körs efter `publish`, alltså bara vid push till `main` eller `master` när testerna har gått igenom. Jobbet loggar in som `deploy` med SSH och kör `deploy.sh`.
+
+Varje repo har två secrets:
+
+| Secret | Innehåll |
+|---|---|
+| `DEPLOY_SSH_KEY` | Den privata nyckeln som bara används för deploy |
+| `VPS_HOST_KEY` | VPS:ens värdnyckel, hela raden från `ssh-keyscan -t ed25519 136.148.214.21` |
+
+Den publika nyckeln ligger i `/home/deploy/.ssh/authorized_keys` med ett tvingat kommando:
+
+```text
+restrict,command="bash /opt/restaurant/deploy/deploy.sh" ssh-ed25519 AAAA... github-deploy
+```
+
+`restrict` stänger av terminal och vidarebefordran. `command` gör att nyckeln bara kan köra `deploy.sh`, oavsett vilket kommando klienten skickar. Den kan alltså inte kopiera filer, så ändringar i driftfilerna kopieras fortfarande med `scp`.
 
 ## Rollback
 
