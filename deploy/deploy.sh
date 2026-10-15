@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Pulls the latest deploy files and images, restarts changed containers and checks that all three hosts answer.
+# Pulls the latest images, restarts changed containers and checks that all three hosts answer.
+# The deploy files are copied here with scp: the organization blocks deploy keys, so the VPS has no git access.
 set -euo pipefail
 
 cd "$(dirname "$0")"
@@ -8,7 +9,6 @@ set -a
 source .env
 set +a
 
-git pull --ff-only
 docker compose pull
 docker compose up -d --remove-orphans
 docker image prune -f

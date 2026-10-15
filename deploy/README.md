@@ -26,12 +26,24 @@ Docker publicerar portar förbi ufw. Därför har bara `caddy` några `ports` i 
 
 ## Första start
 
-Som `deploy`:
+Repot är privat och organisationen tillåter inte deploy keys, så VPS:en har ingen git-åtkomst. Driftfilerna kopieras i stället med `scp` från en dator som har repot.
+
+Som `deploy` på VPS:en:
 
 ```bash
 sudo mkdir -p /opt/restaurant
 sudo chown deploy:deploy /opt/restaurant
-git clone https://github.com/abmi55/07_java_web_services_assignment_individual.git /opt/restaurant
+```
+
+Från repots rot på den egna datorn:
+
+```bash
+scp -r deploy deploy@<ip>:/opt/restaurant/
+```
+
+På VPS:en:
+
+```bash
 cd /opt/restaurant/deploy
 cp .env.example .env
 chmod 600 .env
@@ -56,7 +68,9 @@ cd /opt/restaurant/deploy
 bash deploy.sh
 ```
 
-Skriptet hämtar driftfilerna med `git pull` och de senaste imagen med `docker compose pull`. Det startar om ändrade containrar och väntar sedan i högst 120 s på att alla tre adresser svarar. Om någon inte svarar avslutas det med felkod.
+Om driftfilerna har ändrats, kopiera dem först med `scp` som ovan. `scp` skriver inte över `.env`, eftersom filen inte finns i repot.
+
+Skriptet hämtar de senaste imagen med `docker compose pull`. Det startar om ändrade containrar och väntar sedan i högst 120 s på att alla tre adresser svarar. Om någon inte svarar avslutas det med felkod.
 
 ## Rollback
 
