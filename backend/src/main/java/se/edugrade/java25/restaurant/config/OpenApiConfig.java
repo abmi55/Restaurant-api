@@ -3,6 +3,7 @@ package se.edugrade.java25.restaurant.config;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
+import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.security.OAuthFlow;
 import io.swagger.v3.oas.models.security.OAuthFlows;
 import io.swagger.v3.oas.models.security.Scopes;
@@ -28,7 +29,7 @@ public class OpenApiConfig {
                 .scopes(new Scopes()
                         .addString("bookings:write", "Create bookings")
                         .addString("bookings:manage", "Confirm, seat and cancel bookings")
-                        .addString("restaurants:write", "Create restaurants"));
+                        .addString("restaurants:write", "Create and update restaurants"));
 
         return new OpenAPI().components(new Components().addSecuritySchemes(OAUTH_SCHEME,
                 new SecurityScheme()
@@ -39,22 +40,23 @@ public class OpenApiConfig {
     @Bean
     OpenApiCustomizer operationSecurity() {
         return openApi -> {
-            secure(openApi, "/restaurants", false, "restaurants:write");
-            secure(openApi, "/bookings", true);
-            secure(openApi, "/bookings/{id}", true);
-            secure(openApi, "/bookings", false, "bookings:write");
-            secure(openApi, "/bookings/{id}/confirm", false, "bookings:manage");
-            secure(openApi, "/bookings/{id}/seat", false, "bookings:manage");
-            secure(openApi, "/bookings/{id}/cancel", false, "bookings:manage");
+            secure(openApi, "/restaurants", PathItem.HttpMethod.POST, "restaurants:write");
+            secure(openApi, "/restaurants/{id}", PathItem.HttpMethod.PUT, "restaurants:write");
+            secure(openApi, "/bookings", PathItem.HttpMethod.GET);
+            secure(openApi, "/bookings/{id}", PathItem.HttpMethod.GET);
+            secure(openApi, "/bookings", PathItem.HttpMethod.POST, "bookings:write");
+            secure(openApi, "/bookings/{id}/confirm", PathItem.HttpMethod.POST, "bookings:manage");
+            secure(openApi, "/bookings/{id}/seat", PathItem.HttpMethod.POST, "bookings:manage");
+            secure(openApi, "/bookings/{id}/cancel", PathItem.HttpMethod.POST, "bookings:manage");
         };
     }
 
-    private static void secure(OpenAPI openApi, String path, boolean get, String... scopes) {
+    private static void secure(OpenAPI openApi, String path, PathItem.HttpMethod method, String... scopes) {
         var pathItem = openApi.getPaths().get(path);
         if (pathItem == null) {
             return;
         }
-        Operation operation = get ? pathItem.getGet() : pathItem.getPost();
+        Operation operation = pathItem.readOperationsMap().get(method);
         if (operation != null) {
             operation.addSecurityItem(new SecurityRequirement().addList(OAUTH_SCHEME, List.of(scopes)));
         }

@@ -37,4 +37,11 @@ public class Restaurant {
         this.seatCount = seatCount;
     }
 
+    public void update(String name, String city, String cuisine, int seatCount) {
+        this.name = name;
+        this.city = city;
+        this.cuisine = cuisine;
+        this.seatCount = seatCount;
+    }
+
 }

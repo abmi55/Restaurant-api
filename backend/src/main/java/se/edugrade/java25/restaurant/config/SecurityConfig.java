@@ -39,6 +39,8 @@ public class SecurityConfig {
                                 .permitAll()
                         .requestMatchers(HttpMethod.POST, "/restaurants")
                                 .access(roleAndScope("ADMIN", "restaurants:write"))
+                        .requestMatchers(HttpMethod.PUT, "/restaurants/*")
+                                .access(roleAndScope("ADMIN", "restaurants:write"))
                         .requestMatchers(HttpMethod.GET, "/bookings", "/bookings/*")
                                 .hasAnyRole("GUEST", "STAFF")
                         .requestMatchers(HttpMethod.POST, "/bookings")

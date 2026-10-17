@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -44,5 +45,11 @@ public class RestaurantController {
                 .toUri();
 
         return ResponseEntity.created(location).body(response);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<RestaurantResponse> update(@PathVariable Long id,
+                                                     @Valid @RequestBody RestaurantCreateRequest request) {
+        return ResponseEntity.ok(restaurantService.update(id, request));
     }
 }

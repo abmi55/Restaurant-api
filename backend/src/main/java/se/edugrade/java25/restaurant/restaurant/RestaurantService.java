@@ -32,6 +32,14 @@ public class RestaurantService {
         return RestaurantResponse.from(savedRestaurant);
     }
 
+    @Transactional
+    public RestaurantResponse update(Long id, RestaurantCreateRequest request) {
+        Restaurant restaurant = findRestaurant(id);
+        restaurant.update(request.name(), request.city(), request.cuisine(), request.seatCount());
+        logger.info("Restaurant {} updated", restaurant.getId());
+        return RestaurantResponse.from(restaurant);
+    }
+
     @Transactional(readOnly = true)
     public RestaurantResponse getById(Long id) {
         return RestaurantResponse.from(findRestaurant(id));

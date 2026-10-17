@@ -22,7 +22,7 @@ public class CorsConfig {
         // Bearer tokens use a header, so credentials are disabled and only exact origins are allowed.
         // Spring rejects "*" with credentials, but only on the first request, not at startup.
         configuration.setAllowedOrigins(allowedOrigins);
-        configuration.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "If-None-Match"));
         configuration.setExposedHeaders(List.of("Location", "ETag"));
         configuration.setAllowCredentials(false);
