@@ -8,7 +8,7 @@
 ### Fyll på filen allt eftersom du bygger. Den är din snabbaste väg att se
 ### vad API:et faktiskt svarar, och den blir din demo på redovisningen.
 
-@host = http://localhost:8080
+@host = https://api.136-148-214-21.sslip.io
 
 ### Byt till din driftsatta tjänst inför redovisningen genom att
 ### kommentera bort raden ovan och ta fram den här i stället.
@@ -43,9 +43,9 @@ Content-Type: application/json
 Authorization: Bearer {{adminToken}}
 
 {
-  "name": "Abbas Food",
+  "name": "MAX",
   "city": "Uppsala",
-  "cuisine": "Fast food",
+  "cuisine": "Burgers",
   "seatCount": 50
 }
 

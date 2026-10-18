@@ -21,6 +21,13 @@ public class OpenApiConfig {
 
     private static final String OAUTH_SCHEME = "auth0";
 
+    /**
+     * Deklarerar Auth0:s OAuth2-säkerhetsschema i OpenAPI-dokumentet.
+     *
+     * <p>Swagger UI använder authorization code-flödet mot den konfigurerade
+     * issuern för att hämta en access token. Scopen som listas här är de som
+     * användaren kan begära vid inloggning.
+     */
     @Bean
     OpenAPI openAPI(@Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}") String issuerUri) {
         OAuthFlow authorizationCode = new OAuthFlow()
@@ -37,6 +44,13 @@ public class OpenApiConfig {
                         .flows(new OAuthFlows().authorizationCode(authorizationCode))));
     }
 
+    /**
+     * Markerar de skyddade endpointsen i det genererade dokumentet, med det
+     * scope som var och en kräver. Endpoints som inte listas här är publika.
+     *
+     * <p>Detta påverkar bara dokumentationen. Själva åtkomstreglerna styrs av
+     * säkerhetskonfigurationen.
+     */
     @Bean
     OpenApiCustomizer operationSecurity() {
         return openApi -> {
@@ -51,6 +65,11 @@ public class OpenApiConfig {
         };
     }
 
+    /**
+     * Lägger till ett OAuth2-säkerhetskrav med de angivna scopen på en
+     * operation. Utan scopes kräver operationen bara en giltig token.
+     * Gör ingenting om pathen eller metoden saknas i dokumentet.
+     */
     private static void secure(OpenAPI openApi, String path, PathItem.HttpMethod method, String... scopes) {
         var pathItem = openApi.getPaths().get(path);
         if (pathItem == null) {

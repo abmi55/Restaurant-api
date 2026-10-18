@@ -12,6 +12,15 @@ public class RestaurantAuthoritiesConverter implements Converter<Jwt, Collection
 
     private final DelegatingJwtGrantedAuthoritiesConverter delegate;
 
+    /**
+     * Bygger en converter som läser behörigheter från två claims i JWT:n.
+     *
+     * <p>{@code scope}-claimet blir {@code SCOPE_}-behörigheter, som i Springs
+     * standardbeteende. Rollerna i claimet {@code rolesClaim} blir
+     * {@code ROLE_}-behörigheter, så att de fungerar med {@code hasRole}.
+     *
+     * @param rolesClaim namnet på claimet som innehåller användarens roller
+     */
     public RestaurantAuthoritiesConverter(String rolesClaim) {
         JwtGrantedAuthoritiesConverter roles = new JwtGrantedAuthoritiesConverter();
         roles.setAuthoritiesClaimName(rolesClaim);
@@ -20,6 +29,9 @@ public class RestaurantAuthoritiesConverter implements Converter<Jwt, Collection
                 new JwtGrantedAuthoritiesConverter(), roles);
     }
 
+    /**
+     * Returnerar både scopen och rollerna i token som behörigheter.
+     */
     @Override
     public Collection<GrantedAuthority> convert(Jwt jwt) {
         return delegate.convert(jwt);
