@@ -43,9 +43,9 @@ Content-Type: application/json
 Authorization: Bearer {{adminToken}}
 
 {
-  "name": "MAX",
-  "city": "Uppsala",
-  "cuisine": "Burgers",
+  "name": "",
+  "city": "",
+  "cuisine": "",
   "seatCount": 50
 }
 
@@ -90,7 +90,7 @@ Authorization: Bearer {{guestToken}}
 POST {{host}}/bookings/1/cancel
 Authorization: Bearer {{staffToken}}
 ###
-POST {{host}}/bookings/1/confirm
+POST {{host}}/bookings/2/confirm
 Authorization: Bearer {{staffToken}}
 
 
