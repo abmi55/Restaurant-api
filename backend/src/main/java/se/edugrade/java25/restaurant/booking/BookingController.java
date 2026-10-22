@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,8 +33,9 @@ public class BookingController {
     }
 
     @GetMapping
-    public ResponseEntity<List<EntityModel<BookingResponse>>> getAll() {
-        List<EntityModel<BookingResponse>> bookings = bookingService.getAll().stream()
+    public ResponseEntity<List<EntityModel<BookingResponse>>> getAll(Authentication authentication) {
+        List<EntityModel<BookingResponse>> bookings = bookingService
+                .getAll(authentication.getName(), isStaff(authentication)).stream()
                 .map(bookingModelAssembler::toModel)
                 .toList();
 
@@ -43,8 +45,9 @@ public class BookingController {
     @GetMapping("/{id}")
     public ResponseEntity<EntityModel<BookingResponse>> getById(
             @PathVariable Long id,
-            WebRequest webRequest) {
-        BookingResponse response = bookingService.getById(id);
+            WebRequest webRequest,
+            Authentication authentication) {
+        BookingResponse response = bookingService.getById(id, authentication.getName(), isStaff(authentication));
         String etag = createEtag(response);
 
         if (webRequest.checkNotModified(etag)) {
@@ -58,9 +61,10 @@ public class BookingController {
 
     @PostMapping
     public ResponseEntity<EntityModel<BookingResponse>> create(
-            @Valid @RequestBody BookingCreateRequest request
+            @Valid @RequestBody BookingCreateRequest request,
+            Authentication authentication
     ) {
-        BookingResponse response = bookingService.create(request);
+        BookingResponse response = bookingService.create(request, authentication.getName());
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
                 .buildAndExpand(response.id())
@@ -83,6 +87,11 @@ public class BookingController {
     @PostMapping("/{id}/cancel")
     public ResponseEntity<EntityModel<BookingResponse>> cancel(@PathVariable Long id) {
         return ResponseEntity.ok(bookingModelAssembler.toModel(bookingService.cancel(id)));
+    }
+
+    private static boolean isStaff(Authentication authentication) {
+        return authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_STAFF"));
     }
 
     private String createEtag(BookingResponse response) {

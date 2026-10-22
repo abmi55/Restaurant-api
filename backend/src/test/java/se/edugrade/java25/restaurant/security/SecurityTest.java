@@ -69,7 +69,7 @@ class SecurityTest {
         Restaurant restaurant = restaurantRepository.save(new Restaurant("Test Restaurant", "Stockholm", "Swedish", 20));
         restaurantId = restaurant.getId();
         bookingId = bookingRepository.save(new Booking(restaurant, "Test Guest", "guest@example.test",
-                LocalDateTime.of(2030, 1, 1, 18, 0), 2)).getId();
+                LocalDateTime.of(2030, 1, 1, 18, 0), 2, "user")).getId();
     }
 
     @Test

@@ -28,7 +28,7 @@ public class BookingService {
     }
 
     @Transactional
-    public BookingResponse create(BookingCreateRequest request) {
+    public BookingResponse create(BookingCreateRequest request, String ownerId) {
         Restaurant restaurant = restaurantRepository.findById(request.restaurantId())
                 .orElseThrow(() -> new RestaurantNotFoundException(request.restaurantId()));
         Booking booking = new Booking(
@@ -36,7 +36,8 @@ public class BookingService {
                 request.guestName(),
                 request.guestEmail(),
                 request.dateTime(),
-                request.partySize()
+                request.partySize(),
+                ownerId
         );
 
         Booking savedBooking = bookingRepository.save(booking);
@@ -46,13 +47,20 @@ public class BookingService {
     }
 
     @Transactional(readOnly = true)
-    public BookingResponse getById(Long id) {
-        return BookingResponse.from(findBooking(id));
+    public BookingResponse getById(Long id, String requesterId, boolean staff) {
+        Booking booking = findBooking(id);
+        if (!staff && !requesterId.equals(booking.getOwnerId())) {
+            throw new BookingAccessDeniedException(id);
+        }
+        return BookingResponse.from(booking);
     }
 
     @Transactional(readOnly = true)
-    public List<BookingResponse> getAll() {
-        return bookingRepository.findAll().stream()
+    public List<BookingResponse> getAll(String requesterId, boolean staff) {
+        List<Booking> bookings = staff
+                ? bookingRepository.findAll()
+                : bookingRepository.findByOwnerId(requesterId);
+        return bookings.stream()
                 .map(BookingResponse::from)
                 .toList();
     }

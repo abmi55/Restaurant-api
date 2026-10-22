@@ -33,6 +33,10 @@ public class Booking {
     @Column(nullable = false)
     private int partySize;
 
+    // Auth0 user id (the token's sub claim) of the guest who made the booking.
+    // Null for seed data and existing bookings, which only staff can see.
+    private String ownerId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private BookingStatus status;
@@ -42,13 +46,15 @@ public class Booking {
             String guestName,
             String guestEmail,
             LocalDateTime dateTime,
-            int partySize
+            int partySize,
+            String ownerId
     ) {
         this.restaurant = restaurant;
         this.guestName = guestName;
         this.guestEmail = guestEmail;
         this.dateTime = dateTime;
         this.partySize = partySize;
+        this.ownerId = ownerId;
         this.status = BookingStatus.REQUESTED;
     }
 

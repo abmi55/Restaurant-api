@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import se.edugrade.java25.restaurant.booking.BookingAccessDeniedException;
 import se.edugrade.java25.restaurant.booking.BookingNotFoundException;
 import se.edugrade.java25.restaurant.booking.InvalidBookingStateException;
 import se.edugrade.java25.restaurant.restaurant.RestaurantNotFoundException;
@@ -26,6 +27,11 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler({RestaurantNotFoundException.class, BookingNotFoundException.class})
     ProblemDetail handleNotFound(RuntimeException exception) {
         return problemDetail(HttpStatus.NOT_FOUND, exception.getMessage());
+    }
+
+    @ExceptionHandler(BookingAccessDeniedException.class)
+    ProblemDetail handleBookingAccessDenied(BookingAccessDeniedException exception) {
+        return problemDetail(HttpStatus.FORBIDDEN, exception.getMessage());
     }
 
     @ExceptionHandler(InvalidBookingStateException.class)
