@@ -1,0 +1,149 @@
+# Kapacitetskontroll: kör anropen uppifrån och ned i IntelliJ HTTP Client.
+# Välj miljön local. host och tokens hämtas från miljöfilerna i projektroten.
+# Anrop 1 skapar en ny testrestaurang vid varje omkörning. ID:n sparas automatiskt.
+# Datumet måste ligga i framtiden. Tiderna avser Europe/Stockholm.
+# Samtidighet och timeout för låset verifieras i integrationstesterna.
+
+@capacityDate = 2030-02-01
+
+### 1. Skapa en testrestaurang med 6 platser. Förväntat: 201.
+POST {{host}}/restaurants
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Kapacitetstest",
+  "city": "Stockholm",
+  "cuisine": "Svenskt",
+  "seatCount": 6
+}
+
+> {%
+    client.assert(response.status === 201, "Förväntade 201, fick " + response.status);
+    client.global.set("capacityRestaurantId", response.body.id);
+%}
+
+### 2. Tid i det förflutna. Förväntat: 400.
+POST {{host}}/bookings
+Authorization: Bearer {{guestToken}}
+Content-Type: application/json
+
+{
+  "restaurantId": {{capacityRestaurantId}},
+  "guestName": "Kapacitetstest",
+  "guestEmail": "capacity@example.com",
+  "dateTime": "2020-01-01T18:00:00",
+  "partySize": 2
+}
+
+### 3. Över gränsen på 8 gäster. Förväntat: 400 med uppmaning att kontakta restaurangen.
+POST {{host}}/bookings
+Authorization: Bearer {{guestToken}}
+Content-Type: application/json
+
+{
+  "restaurantId": {{capacityRestaurantId}},
+  "guestName": "Kapacitetstest",
+  "guestEmail": "capacity@example.com",
+  "dateTime": "{{capacityDate}}T18:00:00",
+  "partySize": 9
+}
+
+### 4. Inom gränsen på 8, men fler än restaurangens 6 platser. Förväntat: 400.
+POST {{host}}/bookings
+Authorization: Bearer {{guestToken}}
+Content-Type: application/json
+
+{
+  "restaurantId": {{capacityRestaurantId}},
+  "guestName": "Kapacitetstest",
+  "guestEmail": "capacity@example.com",
+  "dateTime": "{{capacityDate}}T18:00:00",
+  "partySize": 7
+}
+
+### 5. Boka 4 av 6 platser kl. 18.00–20.00. Förväntat: 201, status REQUESTED.
+POST {{host}}/bookings
+Authorization: Bearer {{guestToken}}
+Content-Type: application/json
+
+{
+  "restaurantId": {{capacityRestaurantId}},
+  "guestName": "Kapacitetstest",
+  "guestEmail": "capacity@example.com",
+  "dateTime": "{{capacityDate}}T18:00:00",
+  "partySize": 4
+}
+
+> {%
+    client.assert(response.status === 201, "Förväntade 201, fick " + response.status);
+    client.global.set("capacityBookingId", response.body.id);
+%}
+
+### 6. Ytterligare 2 gäster fyller restaurangen exakt. Förväntat: 201.
+POST {{host}}/bookings
+Authorization: Bearer {{guestToken}}
+Content-Type: application/json
+
+{
+  "restaurantId": {{capacityRestaurantId}},
+  "guestName": "Kapacitetstest",
+  "guestEmail": "capacity@example.com",
+  "dateTime": "{{capacityDate}}T18:00:00",
+  "partySize": 2
+}
+
+### 7. En gäst kl. 19.00 överlappar full restaurang. Förväntat: 409 som ProblemDetail.
+POST {{host}}/bookings
+Authorization: Bearer {{guestToken}}
+Content-Type: application/json
+
+{
+  "restaurantId": {{capacityRestaurantId}},
+  "guestName": "Kapacitetstest",
+  "guestEmail": "capacity@example.com",
+  "dateTime": "{{capacityDate}}T19:00:00",
+  "partySize": 1
+}
+
+### 8. Alla 6 platser är lediga exakt kl. 20.00. Förväntat: 201.
+POST {{host}}/bookings
+Authorization: Bearer {{guestToken}}
+Content-Type: application/json
+
+{
+  "restaurantId": {{capacityRestaurantId}},
+  "guestName": "Kapacitetstest",
+  "guestEmail": "capacity@example.com",
+  "dateTime": "{{capacityDate}}T20:00:00",
+  "partySize": 6
+}
+
+### 9. Sänk till 5 platser när 6 är bokade. Förväntat: 409 som ProblemDetail.
+PUT {{host}}/restaurants/{{capacityRestaurantId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Kapacitetstest",
+  "city": "Stockholm",
+  "cuisine": "Svenskt",
+  "seatCount": 5
+}
+
+### 10. Avboka fyrpersonersbokningen från anrop 5. Förväntat: 200, status CANCELLED.
+POST {{host}}/bookings/{{capacityBookingId}}/cancel
+Authorization: Bearer {{staffToken}}
+
+### 11. Boka de 4 frigjorda platserna kl. 18.00. Förväntat: 201.
+POST {{host}}/bookings
+Authorization: Bearer {{guestToken}}
+Content-Type: application/json
+
+{
+  "restaurantId": {{capacityRestaurantId}},
+  "guestName": "Kapacitetstest",
+  "guestEmail": "capacity@example.com",
+  "dateTime": "{{capacityDate}}T18:00:00",
+  "partySize": 4
+}

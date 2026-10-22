@@ -63,7 +63,7 @@ Authorization: Bearer {{guestToken}}
   "restaurantId": 3,
   "guestName": "Alice Andersson",
   "guestEmail": "alice@example.com",
-  "dateTime": "2026-10-20T19:00:00",
+  "dateTime": "2030-01-01T19:00:00",
   "partySize": 4
  }
 

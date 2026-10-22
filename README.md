@@ -51,7 +51,7 @@ På Windows (cmd eller PowerShell) används `mvnw.cmd test`. Maven Wrapper låse
 
 ## requests.http
 
-I `requests.http` finns anropen mot API:et. Öppna filen i IntelliJ och klicka på den gröna pilen till vänster om ett anrop, eller installera tillägget REST Client i VS Code.
+I `request.http/requests.http` finns anropen mot API:et. Öppna filen i IntelliJ och klicka på den gröna pilen till vänster om ett anrop, eller installera tillägget REST Client i VS Code.
 
 Endast hälsokontrollen fungerar i det utdelade projektet. Resten är bortkommenterad, med ett anrop per krav i uppgiften, och du tar fram dem allteftersom du bygger. Anropen visar också vad som ska hända, till exempel att en okänd bokning ger 404 som `problem+json` och att en gäst som försöker bekräfta får 403 i stället för 401.
 
