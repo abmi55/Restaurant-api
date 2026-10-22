@@ -2,6 +2,8 @@ spring:
   application:
     name: restaurant-api
   jpa:
+    properties:
+      jakarta.persistence.lock.timeout: 5000
     hibernate:
       ddl-auto: create-drop
     defer-datasource-initialization: true
@@ -18,6 +20,8 @@ spring:
           issuer-uri: ${JWT_ISSUER_URI:https://restaurant-api-abbas.eu.auth0.com/}
           audiences: ${JWT_AUDIENCE:https://restaurant-api}
 app:
+  booking:
+    max-party-size: 8
   security:
     roles-claim: https://restaurant-api/roles
   cors:

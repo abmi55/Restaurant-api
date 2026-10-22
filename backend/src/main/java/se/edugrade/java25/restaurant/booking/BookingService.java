@@ -2,12 +2,15 @@ package se.edugrade.java25.restaurant.booking;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.edugrade.java25.restaurant.restaurant.Restaurant;
 import se.edugrade.java25.restaurant.restaurant.RestaurantNotFoundException;
 import se.edugrade.java25.restaurant.restaurant.RestaurantRepository;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -18,19 +21,34 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final RestaurantRepository restaurantRepository;
     private final NotificationService notificationService;
+    private final CapacityChecker capacityChecker;
+    private final Clock clock;
+    private final int maxPartySize;
 
     public BookingService(BookingRepository bookingRepository,
                           RestaurantRepository restaurantRepository,
-                          NotificationService notificationService) {
+                          NotificationService notificationService,
+                          CapacityChecker capacityChecker, Clock clock,
+                          @Value("${app.booking.max-party-size}") int maxPartySize) {
         this.bookingRepository = bookingRepository;
         this.restaurantRepository = restaurantRepository;
         this.notificationService = notificationService;
+        this.capacityChecker = capacityChecker;
+        this.clock = clock;
+        this.maxPartySize = maxPartySize;
     }
 
     @Transactional
     public BookingResponse create(BookingCreateRequest request, String ownerId) {
-        Restaurant restaurant = restaurantRepository.findById(request.restaurantId())
+        requireFutureTime(request.dateTime());
+        requirePartySizeWithinLimit(request.partySize());
+        Restaurant restaurant = restaurantRepository.findByIdForUpdate(request.restaurantId())
                 .orElseThrow(() -> new RestaurantNotFoundException(request.restaurantId()));
+        if (request.partySize() > restaurant.getSeatCount()) {
+            throw new InvalidBookingRequestException(
+                    "Party size exceeds the restaurant's " + restaurant.getSeatCount() + " seats");
+        }
+        capacityChecker.requireSeatsFor(restaurant, request.dateTime(), request.partySize());
         Booking booking = new Booking(
                 restaurant,
                 request.guestName(),
@@ -91,6 +109,20 @@ public class BookingService {
 
         logger.info("Booking {} status changed from {} to {}", id, previousStatus, booking.getStatus());
         return BookingResponse.from(booking);
+    }
+
+    private void requireFutureTime(LocalDateTime dateTime) {
+        if (!dateTime.isAfter(LocalDateTime.now(clock))) {
+            throw new InvalidBookingRequestException("Booking time must be in the future");
+        }
+    }
+
+    private void requirePartySizeWithinLimit(int partySize) {
+        if (partySize > maxPartySize) {
+            throw new InvalidBookingRequestException(
+                    "Online bookings are limited to " + maxPartySize
+                            + " guests. Contact the restaurant for larger parties.");
+        }
     }
 
     private Booking findBooking(Long id) {

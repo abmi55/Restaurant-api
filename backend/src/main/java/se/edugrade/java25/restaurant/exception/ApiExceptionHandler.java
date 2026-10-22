@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.core.PropertyReferenceException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -17,6 +18,8 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import se.edugrade.java25.restaurant.booking.BookingAccessDeniedException;
 import se.edugrade.java25.restaurant.booking.BookingNotFoundException;
 import se.edugrade.java25.restaurant.booking.InvalidBookingStateException;
+import se.edugrade.java25.restaurant.booking.InvalidBookingRequestException;
+import se.edugrade.java25.restaurant.booking.InsufficientCapacityException;
 import se.edugrade.java25.restaurant.restaurant.RestaurantNotFoundException;
 
 @RestControllerAdvice
@@ -34,9 +37,14 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         return problemDetail(HttpStatus.FORBIDDEN, exception.getMessage());
     }
 
-    @ExceptionHandler(InvalidBookingStateException.class)
-    ProblemDetail handleInvalidBookingState(InvalidBookingStateException exception) {
+    @ExceptionHandler({InvalidBookingStateException.class, InsufficientCapacityException.class})
+    ProblemDetail handleInvalidBookingState(RuntimeException exception) {
         return problemDetail(HttpStatus.CONFLICT, exception.getMessage());
+    }
+
+    @ExceptionHandler(InvalidBookingRequestException.class)
+    ProblemDetail handleInvalidBookingRequest(InvalidBookingRequestException exception) {
+        return problemDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
 
     // Thrown when ?sort= names a field the entity does not have, e.g. sort=string from Swagger UI.
@@ -53,6 +61,13 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
             WebRequest request) {
         return ResponseEntity.status(status)
                 .body(problemDetail(HttpStatus.BAD_REQUEST, "Request validation failed"));
+    }
+
+    @ExceptionHandler(PessimisticLockingFailureException.class)
+    ProblemDetail handleLockTimeout(PessimisticLockingFailureException exception) {
+        logger.warn("Lock timeout: {}", exception.getMessage());
+        return problemDetail(HttpStatus.SERVICE_UNAVAILABLE,
+                "The restaurant is busy with another booking. Try again.");
     }
 
     @ExceptionHandler(Exception.class)

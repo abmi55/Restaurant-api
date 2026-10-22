@@ -6,12 +6,17 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import se.edugrade.java25.restaurant.restaurant.Restaurant;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(indexes = @Index(name = "idx_booking_restaurant_date_time", columnList = "restaurant_id, date_time"))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Booking {
+
+    // Every booking occupies seats for the same length of time, for all restaurants.
+    public static final Duration DURATION = Duration.ofMinutes(120);
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -56,6 +61,10 @@ public class Booking {
         this.partySize = partySize;
         this.ownerId = ownerId;
         this.status = BookingStatus.REQUESTED;
+    }
+
+    public LocalDateTime endTime() {
+        return dateTime.plus(DURATION);
     }
 
     public boolean transitionTo(BookingStatus target) {

@@ -6,6 +6,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import se.edugrade.java25.restaurant.booking.CapacityChecker;
+
+import java.time.Clock;
+import java.time.LocalDateTime;
 
 @Service
 public class RestaurantService {
@@ -13,9 +17,13 @@ public class RestaurantService {
     private static final Logger logger = LoggerFactory.getLogger(RestaurantService.class);
 
     private final RestaurantRepository restaurantRepository;
+    private final CapacityChecker capacityChecker;
+    private final Clock clock;
 
-    public RestaurantService(RestaurantRepository restaurantRepository) {
+    public RestaurantService(RestaurantRepository restaurantRepository, CapacityChecker capacityChecker, Clock clock) {
         this.restaurantRepository = restaurantRepository;
+        this.capacityChecker = capacityChecker;
+        this.clock = clock;
     }
 
     @Transactional
@@ -34,7 +42,12 @@ public class RestaurantService {
 
     @Transactional
     public RestaurantResponse update(Long id, RestaurantCreateRequest request) {
-        Restaurant restaurant = findRestaurant(id);
+        Restaurant restaurant = restaurantRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new RestaurantNotFoundException(id));
+        // Existing overbooked restaurants can still change details or raise capacity.
+        if (request.seatCount() < restaurant.getSeatCount()) {
+            capacityChecker.requireRoomForSeatCount(restaurant, request.seatCount(), LocalDateTime.now(clock));
+        }
         restaurant.update(request.name(), request.city(), request.cuisine(), request.seatCount());
         logger.info("Restaurant {} updated", restaurant.getId());
         return RestaurantResponse.from(restaurant);

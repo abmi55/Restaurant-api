@@ -1,6 +1,7 @@
 package se.edugrade.java25.restaurant.security;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -63,6 +64,7 @@ class BookingOwnershipTest {
     }
 
     @Test
+    @DisplayName("GET /bookings as GUEST returns only the guest's own bookings")
     void guestListsOnlyOwnBookings() throws Exception {
         mockMvc.perform(get("/bookings").with(token("guest-a", "GUEST")))
                 .andExpect(status().isOk())
@@ -71,6 +73,7 @@ class BookingOwnershipTest {
     }
 
     @Test
+    @DisplayName("GET /bookings/{id} for another guest's booking returns 403")
     void guestCannotReadAnotherGuestsBooking() throws Exception {
         mockMvc.perform(get("/bookings/{id}", guestBBookingId).with(token("guest-a", "GUEST")))
                 .andExpect(status().isForbidden())
@@ -79,6 +82,7 @@ class BookingOwnershipTest {
     }
 
     @Test
+    @DisplayName("GET /bookings/{id} as STAFF returns another guest's booking")
     void staffCanReadAnotherGuestsBooking() throws Exception {
         mockMvc.perform(get("/bookings/{id}", guestBBookingId).with(token("staff", "STAFF")))
                 .andExpect(status().isOk())
@@ -86,6 +90,7 @@ class BookingOwnershipTest {
     }
 
     @Test
+    @DisplayName("GET /bookings as STAFF returns all bookings")
     void staffListsAllBookings() throws Exception {
         mockMvc.perform(get("/bookings").with(token("staff", "STAFF")))
                 .andExpect(status().isOk())
@@ -95,6 +100,7 @@ class BookingOwnershipTest {
     }
 
     @Test
+    @DisplayName("GET /bookings/{id} as GUEST for an unknown booking returns 404")
     void unknownBookingReturns404ForGuest() throws Exception {
         mockMvc.perform(get("/bookings/{id}", Long.MAX_VALUE).with(token("guest-a", "GUEST")))
                 .andExpect(status().isNotFound())
@@ -102,6 +108,7 @@ class BookingOwnershipTest {
     }
 
     @Test
+    @DisplayName("A matching ETag does not bypass the booking ownership check")
     void matchingEtagDoesNotBypassOwnershipCheck() throws Exception {
         mockMvc.perform(get("/bookings/{id}", guestBBookingId)
                         .with(token("guest-a", "GUEST"))
@@ -111,6 +118,7 @@ class BookingOwnershipTest {
     }
 
     @Test
+    @DisplayName("POST /bookings assigns ownership to the token subject")
     void createdBookingBelongsToTokenSubject() throws Exception {
         String location = mockMvc.perform(post("/bookings")
                         .with(token("guest-a", "GUEST"))
