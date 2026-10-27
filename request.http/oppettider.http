@@ -1,0 +1,145 @@
+# Öppettider: kör anropen uppifrån och ned i IntelliJ HTTP Client.
+# Välj miljön local. host och tokens hämtas från miljöfilerna i projektroten.
+# Varje omkörning skapar en ny testrestaurang och sparar dess ID.
+# Datumen måste ligga i framtiden. Tiderna avser Europe/Stockholm.
+# Behåll en vardag respektive en lördag när datumen byts.
+
+@openingWeekday = 2030-01-02
+@openingSaturday = 2030-01-05
+
+### 1. Skapa restaurang: vardag 11–23 och helg 12–22. Förväntat: 201.
+POST {{host}}/restaurants
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Öppettidstest",
+  "city": "Stockholm",
+  "cuisine": "Svenskt",
+  "seatCount": 10,
+  "weekdayOpensAt": "11:00",
+  "weekdayClosesAt": "23:00",
+  "weekendOpensAt": "12:00",
+  "weekendClosesAt": "22:00"
+}
+
+> {%
+    client.assert(response.status === 201, "Förväntade 201, fick " + response.status);
+    client.global.set("openingRestaurantId", response.body.id);
+%}
+
+### 2. Hämta öppettider. Förväntat: 200, tider i formatet HH:mm.
+GET {{host}}/restaurants/{{openingRestaurantId}}
+Accept: application/json
+
+> {%
+    client.assert(response.status === 200, "Förväntade 200, fick " + response.status);
+    client.assert(response.body.weekdayOpensAt === "11:00", "Fel öppettid för vardag");
+    client.assert(response.body.weekdayClosesAt === "23:00", "Fel stängningstid för vardag");
+    client.assert(response.body.weekendOpensAt === "12:00", "Fel öppettid för helg");
+    client.assert(response.body.weekendClosesAt === "22:00", "Fel stängningstid för helg");
+%}
+
+### 3. Vardag före öppning. Förväntat: 400 som ProblemDetail med 11:00–23:00.
+POST {{host}}/bookings
+Authorization: Bearer {{guestToken}}
+Content-Type: application/json
+
+{
+  "restaurantId": {{openingRestaurantId}},
+  "guestName": "Öppettidstest",
+  "guestEmail": "opening@example.test",
+  "dateTime": "{{openingWeekday}}T10:59:00",
+  "partySize": 2
+}
+
+> {%
+    client.assert(response.status === 400, "Förväntade 400, fick " + response.status);
+    client.assert(response.body.detail.includes("11:00–23:00"), "Öppettider saknas i meddelandet");
+%}
+
+### 4. Vardag efter sista starttid 21.00. Förväntat: 400.
+POST {{host}}/bookings
+Authorization: Bearer {{guestToken}}
+Content-Type: application/json
+
+{
+  "restaurantId": {{openingRestaurantId}},
+  "guestName": "Öppettidstest",
+  "guestEmail": "opening@example.test",
+  "dateTime": "{{openingWeekday}}T21:01:00",
+  "partySize": 2
+}
+
+> {%
+    client.assert(response.status === 400, "Förväntade 400, fick " + response.status);
+%}
+
+### 5. Vardag exakt vid sista starttid. Förväntat: 201.
+POST {{host}}/bookings
+Authorization: Bearer {{guestToken}}
+Content-Type: application/json
+
+{
+  "restaurantId": {{openingRestaurantId}},
+  "guestName": "Öppettidstest",
+  "guestEmail": "opening@example.test",
+  "dateTime": "{{openingWeekday}}T21:00:00",
+  "partySize": 2
+}
+
+> {%
+    client.assert(response.status === 201, "Förväntade 201, fick " + response.status);
+%}
+
+### 6. Lördag kl. 11 är före helgöppningen. Förväntat: 400 med 12:00–22:00.
+POST {{host}}/bookings
+Authorization: Bearer {{guestToken}}
+Content-Type: application/json
+
+{
+  "restaurantId": {{openingRestaurantId}},
+  "guestName": "Öppettidstest",
+  "guestEmail": "opening@example.test",
+  "dateTime": "{{openingSaturday}}T11:00:00",
+  "partySize": 2
+}
+
+> {%
+    client.assert(response.status === 400, "Förväntade 400, fick " + response.status);
+    client.assert(response.body.detail.includes("12:00–22:00"), "Helgens öppettider saknas");
+%}
+
+### 7. Lördag exakt vid öppning. Förväntat: 201.
+POST {{host}}/bookings
+Authorization: Bearer {{guestToken}}
+Content-Type: application/json
+
+{
+  "restaurantId": {{openingRestaurantId}},
+  "guestName": "Öppettidstest",
+  "guestEmail": "opening@example.test",
+  "dateTime": "{{openingSaturday}}T12:00:00",
+  "partySize": 2
+}
+
+> {%
+    client.assert(response.status === 201, "Förväntade 201, fick " + response.status);
+%}
+
+### 8. Restaurang utan öppettider. Förväntat: 400 som ProblemDetail.
+POST {{host}}/restaurants
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Saknade öppettider",
+  "city": "Stockholm",
+  "cuisine": "Svenskt",
+  "seatCount": 10
+}
+
+> {%
+    client.assert(response.status === 400, "Förväntade 400, fick " + response.status);
+    client.assert(response.body.status === 400, "Förväntade ProblemDetail med status 400");
+%}

@@ -971,6 +971,11 @@ EdugradeBrandManualv2.0.pdf
 # Rebuilt from scratch on every export, so it is never the source of truth.
 **/clean/
 
-agents
 presentation
-docs
+AGENTS.md
+CLAUDE.md
+
+# Planning is private. Only decisions and the architecture are public.
+docs/*
+!docs/decisions/
+!docs/architecture.md

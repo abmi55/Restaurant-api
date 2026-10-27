@@ -46,7 +46,11 @@ Authorization: Bearer {{adminToken}}
   "name": "",
   "city": "",
   "cuisine": "",
-  "seatCount": 50
+  "seatCount": 50,
+  "weekdayOpensAt": "11:00",
+  "weekdayClosesAt": "23:00",
+  "weekendOpensAt": "11:00",
+  "weekendClosesAt": "23:00"
 }
 
 ### 2. Lista restauranger. Paginerat. Öppen endpoint.

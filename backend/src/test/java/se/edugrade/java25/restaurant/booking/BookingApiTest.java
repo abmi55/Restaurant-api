@@ -18,6 +18,7 @@ import se.edugrade.java25.restaurant.security.TestJwtDecoderConfig;
 import se.edugrade.java25.restaurant.security.TestTokenIssuer;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.emptyOrNullString;
@@ -72,7 +73,8 @@ class BookingApiTest {
     void setUp() {
         bookingRepository.deleteAll();
         restaurantRepository.deleteAll();
-        restaurantId = restaurantRepository.save(new Restaurant("Test Restaurant", "Stockholm", "Swedish", 20)).getId();
+        restaurantId = restaurantRepository.save(new Restaurant("Test Restaurant", "Stockholm", "Swedish", 20,
+                LocalTime.of(11, 0), LocalTime.of(23, 0), LocalTime.of(11, 0), LocalTime.of(23, 0))).getId();
         guestToken = tokenIssuer.token("bookings:write", "GUEST");
         staffToken = tokenIssuer.token("bookings:manage", "STAFF");
     }

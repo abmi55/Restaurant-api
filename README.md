@@ -1,89 +1,193 @@
-# Inlämningsuppgift: Java Web Services
+<div align="center">
 
-Forka det här repot. Allt du behöver finns här.
+# 🍽️ Restaurant API
 
-## Läs först
+### Bordsbokning – från reservation till dukat bord
 
-1. **[requirements.md](requirements.md)** är uppgiften. Den innehåller fyra delar, kraven för G och VG samt datum.
-2. **[skriftliga_fragor.md](skriftliga_fragor.md)** innehåller de fem frågorna i del 4.
+*REST-API för restauranger och bordsbokningar.*
 
-Deadline är onsdag den 14 oktober 2026 kl. 08.00. Muntlig redovisning sker onsdagen den 14 oktober 2026.
+![Java](https://img.shields.io/badge/Java-25-b07219?style=flat-square&logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.0-6db33f?style=flat-square&logo=springboot&logoColor=white)
+![Auth0](https://img.shields.io/badge/Auth0-Spring%20Security-eb5424?style=flat-square&logo=auth0&logoColor=white)
+![H2](https://img.shields.io/badge/H2-lokalt-1e3a5f?style=flat-square)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-prod-4169e1?style=flat-square&logo=postgresql&logoColor=white)
 
-## Vad som redan finns
+[Á la carte](#-à-la-carte--implementerade-funktioner) ·
+[Dukning](#-dukning--kom-igång-lokalt) ·
+[Servering](#-servering--använd-apit) ·
+[Köket](#-köket--projektstruktur) ·
+[Smakprov](#-smakprov--tester-och-ci) ·
+[Ej på menyn](#-ej-på-menyn--nuvarande-begränsningar)
 
-Ett tomt Spring Boot-projekt. Det innehåller Spring Web och ingenting annat, så att du slipper börja med en tom mapp och själv kan välja alla beroenden som du lägger till.
+</div>
+
+---
+
+> **Välkommen till bords.** Gäster kan skapa och läsa sina egna bokningar. Personalen bekräftar bokningar, placerar gäster och avbokar. Administratörer hanterar restauranger.
+
+Projektet började som en inlämningsuppgift i Java Web Services. API:t använder Java 25, Spring Boot 4.1.0, Spring Data JPA och Spring Security med Auth0. H2 används lokalt och PostgreSQL i produktionsprofilen.
+
+## 📜 À la carte – implementerade funktioner
+
+| | Rätt | Beskrivning |
+|---|---|---|
+| 🏠 | **Restauranger** | Lista restauranger med paginering, hämta en restaurang samt skapa och uppdatera restauranger som administratör. |
+| 📅 | **Bokningar** | Skapa bokningar och hantera statusarna `REQUESTED`, `CONFIRMED`, `SEATED` och `CANCELLED`. |
+| 🔒 | **Egna bokningar** | Gäster ser bara sina egna bokningar. Personal kan läsa alla bokningar. |
+| 🪑 | **Kapacitet** | Kapacitetskontroll vid bokning, även vid samtidiga anrop. En bokning upptar platser i 120 minuter. Högst 8 gäster per bokning tillåts som standard; gränsen är konfigurerbar. |
+| ✅ | **Validering** | Validering av bokningstid och sällskapets storlek samt enhetliga felsvar med `ProblemDetail`. |
+| 🔗 | **HATEOAS** | HATEOAS-länkar för bokningsåtgärder och ETag vid hämtning av en bokning. |
+
+### En bokning från dörr till bord
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> REQUESTED: Gästen bokar
+    REQUESTED --> CONFIRMED: Personalen bekräftar
+    CONFIRMED --> SEATED: Gästen placeras
+    REQUESTED --> CANCELLED: Avbokning
+    CONFIRMED --> CANCELLED: Avbokning
+    SEATED --> [*]
+    CANCELLED --> [*]
+```
+
+`SEATED` och `CANCELLED` är slutstatusar. Placerade gäster upptar fortfarande platser tills bokningens tid är slut.
+
+## 🕯️ Dukning – kom igång lokalt
+
+Installera JDK 25 och se till att `JAVA_HOME` pekar på installationen. Maven Wrapper i repot använder Maven 3.9.11 och hämtar Maven och beroenden vid behov.
+
+Kör från repots rot i PowerShell:
+
+```powershell
+.\mvnw.cmd -pl backend spring-boot:run
+```
+
+På Linux eller macOS:
+
+```bash
+./mvnw -pl backend spring-boot:run
+```
+
+API:t startar på port 8080. Den lokala H2-databasen fylls med exempeldata från `backend/src/main/resources/data.sql`. Data återställs vid omstart.
+
+Kontrollera tjänsten i ett annat terminalfönster. I PowerShell:
+
+```powershell
+curl.exe http://localhost:8080/health
+```
+
+På Linux eller macOS används `curl` i stället för `curl.exe`. Förväntat svar:
+
+```json
+{"status":"UP","service":"restaurant-api"}
+```
+
+### Lokal konfiguration
+
+Standardvärdena finns i [application.yaml](backend/src/main/resources/application.yaml). Auth0 används även vid lokal körning. För att använda en egen Auth0-tenant behöver API, klient och roller sättas upp enligt [Auth0-guiden](auth0/README.md).
+
+| Miljövariabel | Användning |
+|---|---|
+| `PORT` | API:ts port, standardvärde `8080`. |
+| `JWT_ISSUER_URI` | Auth0-issuer. Har ett standardvärde för projektets tenant. |
+| `JWT_AUDIENCE` | API:ts audience, standardvärde `https://restaurant-api`. |
+| `SWAGGER_CLIENT_ID` | Den publika Auth0-klienten för Swagger UI. Har ett standardvärde för projektets klient. |
+| `CORS_ALLOWED_ORIGINS` | Tillåtna klientadresser, standardvärde `http://localhost:5173`. |
+
+Profilen `prod` använder PostgreSQL och miljövariablerna `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` och `DB_PASSWORD`. Se [driftguiden](deploy/README.md) för uppsättning och deploy.
+
+## 🛎️ Servering – använd API:t
+
+När tjänsten körs lokalt finns:
+
+- 📖 [Swagger UI](http://localhost:8080/swagger-ui.html) för att läsa dokumentationen och prova anrop.
+- 📋 [OpenAPI](http://localhost:8080/v3/api-docs) med API:ts specifikation.
+- 💚 [Hälsokontroll](http://localhost:8080/health).
+
+`GET /health`, läsning av restauranger och API-dokumentationen är publika. Skyddade anrop använder en access token från Auth0 i `Authorization: Bearer <access-token>`. Logga in via **Authorize** i Swagger UI. Använd en access token, inte en ID-token.
+
+### Vem gör vad i restaurangen
+
+| Roll | | Åtkomst |
+|---|---|---|
+| `GUEST` | 🧑 Gästen | Läser egna bokningar. Skapar bokningar med scopet `bookings:write`. |
+| `STAFF` | 🤵 Personalen | Läser alla bokningar. Bekräftar, placerar och avbokar med scopet `bookings:manage`. |
+| `ADMIN` | 👨‍🍳 Krögaren | Skapar och uppdaterar restauranger med scopet `restaurants:write`. |
+
+> [!IMPORTANT]
+> Roll och scope måste matcha för skrivande anrop. Rollerna ger inte automatiskt varandras rättigheter. Detaljer om roller, klienter och token finns i [Auth0-guiden](auth0/README.md).
+
+### Exempelanrop
+
+[request.http/requests.http](request.http/requests.http) innehåller API-anrop och [request.http/kapacitetskontroll.http](request.http/kapacitetskontroll.http) innehåller scenarier för kapacitetskontrollen.
+
+Öppna filerna i IntelliJ HTTP Client. Välj miljön `local` och kontrollera att värden är `http://localhost:8080` innan du kör lokala anrop. `requests.http` har också en egen `@host`-rad som behöver ändras för lokal körning. Lägg access tokens i den ignorerade filen `http-client.private.env.json`, enligt instruktionerna i anropsfilen.
+
+## 🧑‍🍳 Köket – projektstruktur
 
 ```text
-pom.xml                          Spring Boot 4.1.0, Java 25
-requests.http                    färdiga anrop mot API:et
-src/main/java/.../restaurant/
-    RestaurantApiApplication.java
-    HealthController.java        GET /health, svarar {"status":"UP"}
-src/main/resources/
-    application.yaml             appnamn och port
-src/test/java/.../restaurant/
-    RestaurantApiApplicationTests.java
+backend/
+    pom.xml                     Applikationens beroenden och bygginställningar
+    src/main/java/              Restauranger, bokningar, säkerhet och felhantering
+    src/main/resources/         Konfiguration och lokala exempeldata
+    src/test/java/              Automatiserade tester
+    Dockerfile                  Container för API:t
+auth0/                          Auth0-uppsättning och rolltilldelning
+deploy/                         Docker Compose, Caddy och driftskript
+request.http/                   Manuella API-anrop
+docs/architecture.md            Arkitekturöversikt
+docs/decisions/                 Dokumenterade beslut för genomförda ändringar
+pom.xml                         Maven-aggregator för backend
+mvnw, mvnw.cmd                  Maven Wrapper
+CHANGELOG.md                    Ändringslogg
+AGENTS.md                       Arbetsregler för AI-agenter
 ```
 
-`HealthController` är inte en del av uppgiften. Behåll den för en snabb kontroll efter en deploy, eller radera den när du har egna endpoints.
+Frontend och bild-API ligger i separata repon. Driftfilerna i `deploy/` beskriver hur tjänsterna körs tillsammans.
 
-## Kom igång
+## 🥄 Smakprov – tester och CI
 
-```bash
-mvn spring-boot:run
+Kör testerna från repots rot i PowerShell:
+
+```powershell
+.\mvnw.cmd test
 ```
 
-I ett annat fönster:
-
-```bash
-curl localhost:8080/health
-```
-
-Du ska få tillbaka `{"status":"UP","service":"restaurant-api"}`. Om du får det fungerar din miljö, och du kan börja med del 1.
-
-Kör testerna från repots rot med:
+På Linux eller macOS:
 
 ```bash
 ./mvnw test
 ```
 
-På Windows (cmd eller PowerShell) används `mvnw.cmd test`. Maven Wrapper låser Maven 3.9.11, samma version som CI.
+Testerna täcker bland annat bokningsflödet, behörigheter, ägarkontroll, kapacitet, samtidiga bokningar och ändring av restaurangens platsantal. Testerna använder lokal testkonfiguration och kräver inga riktiga Auth0-tokens.
 
-## requests.http
+[GitHub Actions](.github/workflows/ci.yml) kör `./mvnw -B -ntp clean test` med Java 25 vid push och pull requests. Den aktuella workflow-filen bygger och testar projektet. Publicering och deploy ingår inte i den.
 
-I `request.http/requests.http` finns anropen mot API:et. Öppna filen i IntelliJ och klicka på den gröna pilen till vänster om ett anrop, eller installera tillägget REST Client i VS Code.
+## 📚 Receptsamlingen – vidare dokumentation
 
-Endast hälsokontrollen fungerar i det utdelade projektet. Resten är bortkommenterad, med ett anrop per krav i uppgiften, och du tar fram dem allteftersom du bygger. Anropen visar också vad som ska hända, till exempel att en okänd bokning ger 404 som `problem+json` och att en gäst som försöker bekräfta får 403 i stället för 401.
+- [Arkitektur](docs/architecture.md): komponenter, ansvar och tekniska vägval.
+- [Beslut](docs/decisions/): vad som har byggts och varför.
+- [Ändringslogg](CHANGELOG.md): genomförda ändringar.
+- [Auth0](auth0/README.md): autentisering, roller och klientinställningar.
+- [Drift](deploy/README.md): Docker Compose, VPS, deploy och rollback. Avsnittet om automatisk deploy behöver stämmas av mot den aktuella CI-konfigurationen.
 
-Byt ut `@host` överst i filen mot URL:en till din driftsatta tjänst inför redovisningen. Då har du en färdig demo i stället för att behöva skriva curl-kommandon inför publik.
+### Utvecklingsrutiner
 
-## Beroenden du själv lägger till
+[AGENTS.md](AGENTS.md) beskriver arbetsregler och rutinen för nya funktioner. Publika beslut finns i `docs/decisions/`; privat planering ingår inte i repot.
 
-Ingenting utöver Spring Web finns i `pom.xml`. Du lägger själv till det du behöver, del för del.
+## 🚫 Ej på menyn – nuvarande begränsningar
 
-För del 1 behöver du persistens, validering, HATEOAS och springdoc. För del 2 behöver du RestAssured och en mockningsmodul. För del 3 behöver du Spring Security som resource server. Kapitlen visar exakt vilka artefakter det gäller.
+- Gäster kan inte avboka eller ändra sina bokningar själva. Avbokning hanteras av personalen.
+- Bokningsbekräftelser simuleras genom loggning. Ingen faktisk e-post eller påminnelse skickas.
+- Kapacitet räknas som en gemensam pool av platser. Enskilda bord, öppettider och faktisk besökslängd hanteras inte.
+- Reservationsbelopp, deposition och betalningshantering ingår inte.
 
-## Fyra fällor som kostar timmar
+---
 
-Det här är sådant som inte syns i ett felmeddelande och som du inte lär dig något av att fastna på.
+<div align="center">
 
-**1. `ProblemDetail` är avstängt som standard.** Del 1 kräver att ett okänt id ger 404 som `problem+json`. Spring Boot svarar med en tom body tills du lägger till följande i `application.yaml`:
+*Smaklig måltid – och lycka till med bokningen.* 🥂
 
-```yaml
-spring:
-  mvc:
-    problemdetails:
-      enabled: true
-```
-
-**2. Boot 4 delade upp testmodulerna.** `spring-boot-starter-test` innehåller inte längre allt. `@WebMvcTest` kräver `spring-boot-webmvc-test`, `@DataJpaTest` kräver `spring-boot-data-jpa-test`, och `TestRestTemplate` kräver både `spring-boot-resttestclient` och `spring-boot-restclient`. Alla ska ha `test`-scope. Om de saknas får du ett annotationsfel som ser ut som ett stavfel.
-
-**3. Jackson 3 bytte paket.** Importerna heter `tools.jackson.*`, inte `com.fasterxml.jackson.*`. Om du kopierar en kodsnutt från nätet är den nästan alltid skriven för Jackson 2.
-
-**4. `/health` låses när du lägger till säkerhet i del 3.** Din hostingplattform pingar oftast en hälsoendpoint för att avgöra om tjänsten är igång. Om den svarar med 401 stängs din deploy ner. Släpp uttryckligen igenom den i din `SecurityFilterChain`.
-
-## Frivilligt: en frontend
-
-Du får bygga en frontend och vibe-koda den. Den bedöms inte, men CORS i del 3 blir mycket mer konkret när en riktig sida på en annan origin anropar ditt API. Dessutom får du något annat än Swagger UI att visa under redovisningen.
-
-**Lycka till**
+</div>

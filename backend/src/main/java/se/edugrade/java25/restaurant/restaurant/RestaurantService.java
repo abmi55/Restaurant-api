@@ -32,7 +32,11 @@ public class RestaurantService {
                 request.name(),
                 request.city(),
                 request.cuisine(),
-                request.seatCount()
+                request.seatCount(),
+                request.weekdayOpensAt(),
+                request.weekdayClosesAt(),
+                request.weekendOpensAt(),
+                request.weekendClosesAt()
         );
 
         Restaurant savedRestaurant = restaurantRepository.save(restaurant);
@@ -48,7 +52,9 @@ public class RestaurantService {
         if (request.seatCount() < restaurant.getSeatCount()) {
             capacityChecker.requireRoomForSeatCount(restaurant, request.seatCount(), LocalDateTime.now(clock));
         }
-        restaurant.update(request.name(), request.city(), request.cuisine(), request.seatCount());
+        restaurant.update(request.name(), request.city(), request.cuisine(), request.seatCount(),
+                request.weekdayOpensAt(), request.weekdayClosesAt(),
+                request.weekendOpensAt(), request.weekendClosesAt());
         logger.info("Restaurant {} updated", restaurant.getId());
         return RestaurantResponse.from(restaurant);
     }

@@ -15,7 +15,11 @@ Content-Type: application/json
   "name": "Kapacitetstest",
   "city": "Stockholm",
   "cuisine": "Svenskt",
-  "seatCount": 6
+  "seatCount": 6,
+  "weekdayOpensAt": "11:00",
+  "weekdayClosesAt": "23:00",
+  "weekendOpensAt": "11:00",
+  "weekendClosesAt": "23:00"
 }
 
 > {%
@@ -128,7 +132,11 @@ Content-Type: application/json
   "name": "Kapacitetstest",
   "city": "Stockholm",
   "cuisine": "Svenskt",
-  "seatCount": 5
+  "seatCount": 5,
+  "weekdayOpensAt": "11:00",
+  "weekdayClosesAt": "23:00",
+  "weekendOpensAt": "11:00",
+  "weekendClosesAt": "23:00"
 }
 
 ### 10. Avboka fyrpersonersbokningen från anrop 5. Förväntat: 200, status CANCELLED.

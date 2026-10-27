@@ -19,6 +19,7 @@ import se.edugrade.java25.restaurant.security.TestTokenIssuer;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -50,7 +51,8 @@ class RestaurantSeatCountTest {
     void setUp() {
         bookings.deleteAll();
         restaurants.deleteAll();
-        restaurant = restaurants.save(new Restaurant("Test", "Stockholm", "Swedish", 10));
+        restaurant = restaurants.save(new Restaurant("Test", "Stockholm", "Swedish", 10,
+                LocalTime.of(11, 0), LocalTime.of(23, 0), LocalTime.of(11, 0), LocalTime.of(23, 0)));
     }
 
     @Test
@@ -104,7 +106,9 @@ class RestaurantSeatCountTest {
                                 .claim(TestTokenIssuer.ROLES_CLAIM, List.of("ADMIN"))))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
-                        {"name": "Updated", "city": "Stockholm", "cuisine": "Swedish", "seatCount": %d}
+                        {"name": "Updated", "city": "Stockholm", "cuisine": "Swedish", "seatCount": %d,
+                         "weekdayOpensAt": "11:00", "weekdayClosesAt": "23:00",
+                         "weekendOpensAt": "11:00", "weekendClosesAt": "23:00"}
                         """.formatted(seatCount)));
     }
 

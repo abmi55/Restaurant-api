@@ -19,6 +19,7 @@ import se.edugrade.java25.restaurant.restaurant.Restaurant;
 import se.edugrade.java25.restaurant.restaurant.RestaurantRepository;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -55,7 +56,8 @@ class BookingOwnershipTest {
     void setUp() {
         bookingRepository.deleteAll();
         restaurantRepository.deleteAll();
-        Restaurant restaurant = restaurantRepository.save(new Restaurant("Test Restaurant", "Stockholm", "Swedish", 20));
+        Restaurant restaurant = restaurantRepository.save(new Restaurant("Test Restaurant", "Stockholm", "Swedish", 20,
+                LocalTime.of(11, 0), LocalTime.of(23, 0), LocalTime.of(11, 0), LocalTime.of(23, 0)));
         restaurantId = restaurant.getId();
         guestABookingId = bookingRepository.save(new Booking(restaurant, "Guest A", "guest-a@example.test",
                 LocalDateTime.of(2030, 1, 1, 18, 0), 2, "guest-a")).getId();

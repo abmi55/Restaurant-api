@@ -19,6 +19,7 @@ import se.edugrade.java25.restaurant.restaurant.Restaurant;
 import se.edugrade.java25.restaurant.restaurant.RestaurantRepository;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -66,7 +67,8 @@ class SecurityTest {
     void setUp() {
         bookingRepository.deleteAll();
         restaurantRepository.deleteAll();
-        Restaurant restaurant = restaurantRepository.save(new Restaurant("Test Restaurant", "Stockholm", "Swedish", 20));
+        Restaurant restaurant = restaurantRepository.save(new Restaurant("Test Restaurant", "Stockholm", "Swedish", 20,
+                LocalTime.of(11, 0), LocalTime.of(23, 0), LocalTime.of(11, 0), LocalTime.of(23, 0)));
         restaurantId = restaurant.getId();
         bookingId = bookingRepository.save(new Booking(restaurant, "Test Guest", "guest@example.test",
                 LocalDateTime.of(2030, 1, 1, 18, 0), 2, "user")).getId();
@@ -185,7 +187,11 @@ class SecurityTest {
                   "name": "New Restaurant",
                   "city": "Göteborg",
                   "cuisine": "Italian",
-                  "seatCount": 30
+                  "seatCount": 30,
+                  "weekdayOpensAt": "11:00",
+                  "weekdayClosesAt": "23:00",
+                  "weekendOpensAt": "11:00",
+                  "weekendClosesAt": "23:00"
                 }
                 """;
     }

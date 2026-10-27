@@ -23,6 +23,7 @@ import se.edugrade.java25.restaurant.security.TestTokenIssuer;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -62,7 +63,8 @@ class BookingCapacityTest {
     void setUp() {
         bookings.deleteAll();
         restaurants.deleteAll();
-        restaurant = restaurants.save(new Restaurant("Test", "Stockholm", "Swedish", 10));
+        restaurant = restaurants.save(new Restaurant("Test", "Stockholm", "Swedish", 10,
+                LocalTime.of(11, 0), LocalTime.of(23, 0), LocalTime.of(11, 0), LocalTime.of(23, 0)));
     }
 
     @Test
@@ -87,7 +89,8 @@ class BookingCapacityTest {
     @Test
     @DisplayName("Bookings at another restaurant do not use the requested restaurant capacity")
     void otherRestaurantDoesNotUseCapacity() throws Exception {
-        Restaurant other = restaurants.save(new Restaurant("Other", "Stockholm", "Swedish", 10));
+        Restaurant other = restaurants.save(new Restaurant("Other", "Stockholm", "Swedish", 10,
+                LocalTime.of(11, 0), LocalTime.of(23, 0), LocalTime.of(11, 0), LocalTime.of(23, 0)));
         existing(other, "2030-01-01T18:00", 10, BookingStatus.REQUESTED);
         create(restaurant.getId(), "2030-01-01T18:00", 4).andExpect(status().isCreated());
     }
@@ -137,7 +140,8 @@ class BookingCapacityTest {
     @Test
     @DisplayName("A party larger than the restaurant capacity returns 400")
     void partyLargerThanRestaurantIsBadRequest() throws Exception {
-        Restaurant small = restaurants.save(new Restaurant("Small", "Stockholm", "Swedish", 6));
+        Restaurant small = restaurants.save(new Restaurant("Small", "Stockholm", "Swedish", 6,
+                LocalTime.of(11, 0), LocalTime.of(23, 0), LocalTime.of(11, 0), LocalTime.of(23, 0)));
         create(small.getId(), "2030-01-01T18:00", 7).andExpect(status().isBadRequest());
     }
 
@@ -200,7 +204,9 @@ class BookingCapacityTest {
                     .with(token("ADMIN", "restaurants:write"))
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""
-                            {"name": "Test", "city": "Stockholm", "cuisine": "Swedish", "seatCount": 6}
+                            {"name": "Test", "city": "Stockholm", "cuisine": "Swedish", "seatCount": 6,
+                             "weekdayOpensAt": "11:00", "weekdayClosesAt": "23:00",
+                             "weekendOpensAt": "11:00", "weekendClosesAt": "23:00"}
                             """))
                     .andExpect(status().isConflict()));
             Thread.sleep(300);

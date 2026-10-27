@@ -48,6 +48,7 @@ public class BookingService {
             throw new InvalidBookingRequestException(
                     "Party size exceeds the restaurant's " + restaurant.getSeatCount() + " seats");
         }
+        requireWithinOpeningHours(restaurant, request.dateTime());
         capacityChecker.requireSeatsFor(restaurant, request.dateTime(), request.partySize());
         Booking booking = new Booking(
                 restaurant,
@@ -109,6 +110,19 @@ public class BookingService {
 
         logger.info("Booking {} status changed from {} to {}", id, previousStatus, booking.getStatus());
         return BookingResponse.from(booking);
+    }
+
+    private void requireWithinOpeningHours(Restaurant restaurant, LocalDateTime dateTime) {
+        var day = dateTime.getDayOfWeek();
+        var opensAt = dateTime.toLocalDate().atTime(restaurant.opensAt(day));
+        var closesAt = dateTime.toLocalDate().atTime(restaurant.closesAt(day));
+        if (dateTime.isBefore(opensAt) || dateTime.plus(Booking.DURATION).isAfter(closesAt)) {
+            throw new InvalidBookingRequestException(
+                    "On " + (Restaurant.isWeekend(day) ? "weekends" : "weekdays")
+                            + " the restaurant is open " + opensAt.toLocalTime() + "–" + closesAt.toLocalTime()
+                            + ". Bookings must start between " + opensAt.toLocalTime()
+                            + " and " + closesAt.minus(Booking.DURATION).toLocalTime() + ".");
+        }
     }
 
     private void requireFutureTime(LocalDateTime dateTime) {
